@@ -4,15 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { ChangeEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import type { Resolver } from "react-hook-form";
 import { clsx } from "clsx";
 import Image from "next/image";
 import ForecastResult from "./ForecastResult";
-import {
-  type ForecastRequest,
-  type ForecastResponse,
-  forecastRequestSchema,
-  forecastResponseSchema,
-} from "@/lib/validators";
+import { type ForecastRequest, type ForecastResponse, forecastRequestSchema, forecastResponseSchema } from "@/lib/validators";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase";
 import { cardClassName, headingClassName, subtleTextClassName } from "@/lib/theme";
 import { z } from "zod";
@@ -138,25 +134,29 @@ export default function ForecastForm() {
     };
   }, [forecastResult?.forecastId, forecastResult?.summary, language]);
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    reset,
-    formState: { errors },
-  } = useForm<FormValues>({
-    resolver: zodResolver<FormValues>(FORM_SCHEMA),
-    defaultValues: {
-      product: {
-        sku: "",
-        title: "",
-        category: "",
-        color: "",
-        sizes: "",
-        first_sale_month: "",
-      },
+const formResolver = zodResolver(FORM_SCHEMA) as Resolver<FormValues>;
+
+const {
+  register,
+  handleSubmit,
+  setValue,
+  reset,
+  formState: { errors },
+} = useForm<FormValues>({
+  resolver: formResolver,
+  defaultValues: {
+    horizon: 6,
+    product: {
+      sku: "",
+      title: "",
+      category: "",
+      color: "",
+      sizes: "",
+      cost: 1,
+      first_sale_month: "",
     },
-  });
+  },
+});
 
   const supabaseClient = useMemo(() => {
     if (!supabaseEnabled) return null;
