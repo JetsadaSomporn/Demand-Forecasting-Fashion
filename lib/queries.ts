@@ -207,43 +207,49 @@ export async function getForecastHistory(limit = 50) {
 }
 
 export async function getSettingsDefaults() {
-  const local = await readLocalSettings();
-
-  const base = {
-    displayName: local?.displayName ?? "",
-    brandName: local?.brandName ?? "",
-    timezone: local?.timezone ?? "Asia/Bangkok",
-    currency: local?.currency ?? "THB",
-    language: resolveLanguage(local?.language),
+  const defaults = {
+    displayName: "",
+    brandName: "",
+    timezone: "Asia/Bangkok",
+    currency: "THB",
+    language: resolveLanguage(undefined),
   };
 
-  if (!isSupabaseConfigured("service")) {
-    return base;
-  }
+  if (isSupabaseConfigured("service")) {
+    try {
+      const supabase = createSupabaseServiceClient();
+      const { data, error } = await supabase
+        .from("settings")
+        .select("brand_name, display_name, timezone, currency, language")
+        .limit(1)
+        .single();
 
-  try {
-    const supabase = createSupabaseServiceClient();
-    const { data, error } = await supabase
-      .from("settings")
-      .select("brand_name, display_name, timezone, currency")
-      .limit(1)
-      .single();
-
-    if (error || !data) {
-      return base;
+      if (!error && data) {
+        return {
+          displayName: data.display_name ?? defaults.displayName,
+          brandName: data.brand_name ?? defaults.brandName,
+          timezone: data.timezone ?? defaults.timezone,
+          currency: data.currency ?? defaults.currency,
+          language: resolveLanguage(data.language),
+        };
+      }
+    } catch (error) {
+      console.error("Supabase settings error", error);
     }
-
-    return {
-      displayName: data.display_name ?? base.displayName,
-      brandName: data.brand_name ?? base.brandName,
-      timezone: data.timezone ?? base.timezone,
-      currency: data.currency ?? base.currency,
-      language: base.language,
-    };
-  } catch (error) {
-    console.error("Supabase settings error", error);
-    return base;
   }
+
+  const local = await readLocalSettings();
+  if (local) {
+    return {
+      displayName: local.displayName ?? defaults.displayName,
+      brandName: local.brandName ?? defaults.brandName,
+      timezone: local.timezone ?? defaults.timezone,
+      currency: local.currency ?? defaults.currency,
+      language: resolveLanguage(local.language),
+    };
+  }
+
+  return defaults;
 }
 
 function normalizeForecastDetail(row: ForecastRowLike): ForecastDetail {

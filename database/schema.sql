@@ -127,6 +127,7 @@ create table if not exists public.settings (
   brand_name text not null,
   timezone text not null,
   currency text not null default 'THB',
+  language text not null default 'en',
   created_at timestamptz not null default public.utcnow(),
   updated_at timestamptz not null default public.utcnow()
 );
@@ -256,12 +257,11 @@ create policy "exports: authenticated access"
   with check (bucket_id in ('product-images','exports') and auth.role() = 'authenticated');
 
 -- SEED DATA ----------------------------------------------------------
-insert into public.settings (display_name, brand_name, timezone, currency)
-values ('Merch Ops', 'Demand Forecast', 'Asia/Bangkok', 'THB')
+insert into public.settings (display_name, brand_name, timezone, currency, language)
+values ('Merch Ops', 'Demand Forecast', 'Asia/Bangkok', 'THB', 'en')
 on conflict do nothing;
 
 insert into public.profiles (id, email)
 select id, email
 from auth.users
 on conflict (id) do update set email = excluded.email;
-

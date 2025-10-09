@@ -35,7 +35,10 @@ export async function POST(request: Request) {
     const raw = await request.json();
     const parsed = settingsSchema.parse(raw);
 
-    if (isSupabaseConfigured("service")) {
+    const supabaseConfigured = isSupabaseConfigured("service");
+    let persistedToSupabase = false;
+
+    if (supabaseConfigured) {
       try {
         const supabase = createSupabaseServiceClient();
         const existingId = await readSupabaseSettingsId();
@@ -48,6 +51,7 @@ export async function POST(request: Request) {
               brand_name: parsed.brandName,
               timezone: parsed.timezone,
               currency: parsed.currency,
+              language: parsed.language,
             })
             .eq("id", existingId);
         } else {
@@ -58,14 +62,19 @@ export async function POST(request: Request) {
               brand_name: parsed.brandName,
               timezone: parsed.timezone,
               currency: parsed.currency,
+              language: parsed.language,
             });
         }
+        persistedToSupabase = true;
       } catch (error) {
         console.error("Supabase settings write failed", error);
+        throw new Error("ไม่สามารถบันทึกการตั้งค่าไปยัง Supabase ได้");
       }
     }
 
-    await writeLocalSettings(parsed);
+    if (!persistedToSupabase) {
+      await writeLocalSettings(parsed);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
