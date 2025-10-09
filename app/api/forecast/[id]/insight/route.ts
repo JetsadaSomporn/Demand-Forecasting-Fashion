@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import { createSupabaseServiceClient, isSupabaseConfigured } from "@/lib/supabase";
@@ -201,11 +201,11 @@ async function persistSummary(
 }
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const forecastId = params.id;
+    const { id: forecastId } = await context.params;
     if (!forecastId) {
       return NextResponse.json({ error: "Forecast ID required" }, { status: 400 });
     }
