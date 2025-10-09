@@ -7,33 +7,18 @@ import { useForm } from "react-hook-form";
 import { clsx } from "clsx";
 import Image from "next/image";
 import ForecastResult from "./ForecastResult";
-import { type ForecastRequest, type ForecastResponse, forecastResponseSchema } from "@/lib/validators";
+import {
+  type ForecastRequest,
+  type ForecastResponse,
+  forecastRequestSchema,
+  forecastResponseSchema,
+} from "@/lib/validators";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase";
 import { cardClassName, headingClassName, subtleTextClassName } from "@/lib/theme";
 import { z } from "zod";
 import { useTranslation } from "@/lib/i18n/client";
 
-const FORM_SCHEMA = z.object({
-  horizon: z.number().int().min(1).max(12),
-  product: z.object({
-    sku: z.string().trim().max(64),
-    title: z.string().trim().max(120),
-    category: z
-      .string()
-      .min(1, { message: "validators.categoryRequired" })
-      .max(80),
-    color: z
-      .string()
-      .min(1, { message: "validators.colorRequired" })
-      .max(80),
-    sizes: z
-      .string()
-      .min(1, { message: "validators.sizesRequired" })
-      .max(80),
-    cost: z.number().positive({ message: "validators.costPositive" }),
-    first_sale_month: z.string().min(7).max(10),
-  }),
-});
+const FORM_SCHEMA = forecastRequestSchema.pick({ horizon: true, product: true });
 
 type FormValues = z.infer<typeof FORM_SCHEMA>;
 
@@ -160,16 +145,14 @@ export default function ForecastForm() {
     reset,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver<FormValues, unknown, FormValues>(FORM_SCHEMA),
+    resolver: zodResolver<FormValues>(FORM_SCHEMA),
     defaultValues: {
-      horizon: 6,
       product: {
         sku: "",
         title: "",
         category: "",
         color: "",
         sizes: "",
-        cost: 0,
         first_sale_month: "",
       },
     },
