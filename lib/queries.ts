@@ -17,6 +17,9 @@ export type ForecastSummary = {
   model_name: "lgbm_full" | "lgbm_meta";
   horizon: number;
   created_at: string;
+  summary?: string | null;
+  summary_language?: string | null;
+  summary_created_at?: string | null;
 };
 
 export type ForecastDetail = ForecastSummary & {
@@ -57,6 +60,9 @@ async function readLocalForecasts(limit: number): Promise<ForecastDetail[]> {
         months: parsed.months,
         product: parsed.product ?? parsed.params?.product ?? null,
         created_at: parsed.created_at ?? new Date().toISOString(),
+        summary: parsed.summary ?? null,
+        summary_language: parsed.summary_language ?? null,
+        summary_created_at: parsed.summary_created_at ?? null,
       });
       items.push(normalized);
     }
@@ -105,6 +111,9 @@ type SupabaseForecastRow = {
   product?: { sku?: string | null; title?: string | null; category?: string | null; color?: string | null; sizes?: string | null; cost?: number | null; first_sale_month?: string | null } | null;
   product_sku?: string | null;
   created_at: string;
+  summary?: string | null;
+  summary_language?: string | null;
+  summary_created_at?: string | null;
 };
 
 type ForecastRowLike = {
@@ -122,6 +131,9 @@ type ForecastRowLike = {
   product?: ForecastProductRecord | null;
   product_sku?: string | null;
   created_at: string;
+  summary?: string | null;
+  summary_language?: string | null;
+  summary_created_at?: string | null;
 };
 
 function mapForecastRow(row: SupabaseForecastRow): ForecastDetail {
@@ -140,7 +152,7 @@ export async function getRecentForecasts(limit = 4): Promise<ForecastSummary[]> 
     const { data, error } = await supabase
       .from("forecasts")
       .select(
-        "id, model_name, horizon, metrics, created_at, product_id, y_pred, y_true, months, params, products:product_id ( sku, title, category, color )"
+        "id, model_name, horizon, metrics, created_at, product_id, y_pred, y_true, months, params, summary, summary_language, summary_created_at, products:product_id ( sku, title, category, color )"
       )
       .order("created_at", { ascending: false })
       .limit(limit);
@@ -173,7 +185,7 @@ export async function getForecastHistory(limit = 50) {
     const { data, error } = await supabase
       .from("forecasts")
       .select(
-        "id, model_name, horizon, metrics, created_at, product_id, y_pred, y_true, months, params, products:product_id ( sku, title, category, color )"
+        "id, model_name, horizon, metrics, created_at, product_id, y_pred, y_true, months, params, summary, summary_language, summary_created_at, products:product_id ( sku, title, category, color )"
       )
       .order("created_at", { ascending: false })
       .limit(limit);
@@ -288,6 +300,9 @@ function normalizeForecastDetail(row: ForecastRowLike): ForecastDetail {
     y_true: actuals.length ? actuals : null,
     months: resolvedMonths,
     created_at: row.created_at,
+    summary: typeof row.summary === "string" ? row.summary : null,
+    summary_language: typeof row.summary_language === "string" ? row.summary_language : null,
+    summary_created_at: typeof row.summary_created_at === "string" ? row.summary_created_at : null,
   };
 
   if (!detail.months.length) {

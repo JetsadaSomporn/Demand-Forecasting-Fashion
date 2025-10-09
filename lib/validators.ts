@@ -27,6 +27,7 @@ export const forecastRequestSchema = z.object({
   salesCsvContent: z.string().optional().nullable(),
   imageUrl: z.string().url().optional().nullable(),
   imageBase64: z.string().optional().nullable(),
+  language: z.enum(["en", "th"]).optional(),
 });
 
 export type ForecastRequest = z.infer<typeof forecastRequestSchema>;
@@ -41,6 +42,7 @@ export const forecastResponseSchema = z.object({
   months: z.array(z.string()),
   exportPath: z.string().optional(),
   warning: z.string().optional(),
+  summary: z.string().nullable().optional(),
 });
 
 export const settingsSchema = z.object({

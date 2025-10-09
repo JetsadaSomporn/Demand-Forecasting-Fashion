@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { clsx } from "clsx";
+import { Sparkles } from "lucide-react";
 import MinimalChart from "./MinimalChart";
 import { cardClassName, headingClassName, subtleTextClassName } from "@/lib/theme";
 import { useTranslation } from "@/lib/i18n/client";
@@ -14,6 +15,7 @@ type ForecastResultData = {
   y_pred: number[];
   y_true?: number[] | null;
   months: string[];
+  summary?: string | null;
 };
 
 type ForecastResultProps = {
@@ -23,6 +25,8 @@ type ForecastResultProps = {
   isSaving?: boolean;
   isDownloading?: boolean;
   statusMessage?: string | null;
+  insight?: string | null;
+  isInsightStreaming?: boolean;
 };
 
 function formatMonthLabel(month: string, locale: string) {
@@ -45,6 +49,8 @@ export default function ForecastResult({
   isSaving,
   isDownloading,
   statusMessage,
+  insight,
+  isInsightStreaming,
 }: ForecastResultProps) {
   const { t, language } = useTranslation();
   const locale = language === "th" ? "th-TH" : "en-US";
@@ -57,6 +63,7 @@ export default function ForecastResult({
       : t("models.metadataFull");
   const horizonLabel = t("common.monthsLabel", { count: data.horizon });
   const separator = t("forecastResult.modelSummary.separator");
+  const displayedInsight = (insight ?? data.summary ?? "").trim();
 
   return (
     <section className={clsx(cardClassName, "mt-10 flex flex-col gap-8 p-8")}> 
@@ -135,6 +142,24 @@ export default function ForecastResult({
           {statusMessage}
         </div>
       ) : null}
+
+      {(displayedInsight || isInsightStreaming) && (
+        <div className="relative rounded-3xl border border-border/70 bg-surface py-5 pl-6 pr-5 shadow-[0_15px_40px_rgba(31,27,23,0.08)]">
+          <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.35em] text-foreground/60">
+            <Sparkles className="h-4 w-4 text-accent" />
+            <span>{t("forecastResult.insightHeading")}</span>
+          </div>
+          <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+            {displayedInsight || ""}
+            {isInsightStreaming ? <span className="animate-pulse"> ▍</span> : null}
+          </p>
+          {!displayedInsight && isInsightStreaming ? (
+            <p className="mt-2 text-xs text-foreground-muted">
+              {t("forecastResult.insightLoading")}
+            </p>
+          ) : null}
+        </div>
+      )}
 
       <MinimalChart labels={labels} predicted={data.y_pred} actual={actualValues} />
 

@@ -13,9 +13,53 @@ import {
   createSupabaseServiceClient,
   isSupabaseConfigured,
 } from "@/lib/supabase";
+import { callLlama } from "@/lib/llm";
 
-const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
-const NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
+type SupportedLanguage = "en" | "th";
+
+const CSV_NOTE_MESSAGES: Record<
+  "downloadFailed" | "mappingFallback" | "analysisFailed",
+  Record<SupportedLanguage, string>
+> = {
+  downloadFailed: {
+    en: "Uploaded CSV could not be downloaded; using fallback defaults.",
+    th: "ไม่สามารถดาวน์โหลดไฟล์ CSV ได้ ระบบจะใช้ข้อมูลเดิมแทน",
+  },
+  mappingFallback: {
+    en: "CSV headers could not be mapped automatically; continuing with uploaded columns.",
+    th: "ไม่สามารถแมปคอลัมน์ CSV อัตโนมัติได้ จะใช้คอลัมน์ตามไฟล์ที่อัปโหลด",
+  },
+  analysisFailed: {
+    en: "CSV analysis failed; continuing with uploaded data.",
+    th: "การวิเคราะห์ CSV ล้มเหลว จะใช้ข้อมูลที่อัปโหลดต่อ",
+  },
+};
+
+const CSV_SOURCE_LABEL: Record<"llama" | "fallback", Record<SupportedLanguage, string>> = {
+  llama: {
+    en: "LLM",
+    th: "LLM",
+  },
+  fallback: {
+    en: "rule-based",
+    th: "ตรรกะตั้งต้น",
+  },
+};
+
+function getCsvNote(key: keyof typeof CSV_NOTE_MESSAGES, language: SupportedLanguage) {
+  return CSV_NOTE_MESSAGES[key][language] ?? CSV_NOTE_MESSAGES[key].en;
+}
+
+function getMappingNote(
+  detection: CsvColumnDetection,
+  language: SupportedLanguage
+) {
+  const sourceLabel = CSV_SOURCE_LABEL[detection.source]?.[language] ?? CSV_SOURCE_LABEL.llama[language];
+  if (language === "th") {
+    return `แมปคอลัมน์เรียบร้อย (${sourceLabel}) ${detection.monthHeader} → month, ${detection.quantityHeader} → qty`;
+  }
+  return `CSV columns mapped (${sourceLabel}): ${detection.monthHeader} → month, ${detection.quantityHeader} → qty`;
+}
 
 const LOCAL_FORECAST_DIR = path.join(process.cwd(), ".data/forecasts");
 
@@ -31,60 +75,126 @@ type PythonForecastResponse = {
   error?: string;
 };
 
-type LlamaChatOptions = {
-  maxTokens?: number;
-};
-
-async function callLlama(prompt: string, options: LlamaChatOptions = {}) {
-  if (!NVIDIA_API_KEY) {
-    console.log("[LLM] No API key configured");
-    return null;
-  }
-
-  const { maxTokens = 200 } = options;
-
-  try {
-    console.log("[LLM] Calling Llama 3.3 70B...");
-    const response = await fetch(NVIDIA_API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${NVIDIA_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "meta/llama-3.3-70b-instruct",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.2,
-        top_p: 0.7,
-        max_tokens: maxTokens,
-        stream: false,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[LLM] API error:", response.status, errorText);
-      return null;
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content ?? null;
-    if (!content) {
-      console.error("[LLM] No content in response");
-      return null;
-    }
-    console.log("[LLM] Response:", content);
-    return content;
-  } catch (error) {
-    console.error("[LLM] Request error:", error);
-    return null;
-  }
-}
-
 function sanitizeText(value: string | null | undefined) {
   if (!value) return "__NA__";
   const trimmed = value.trim();
   return trimmed.length ? trimmed : "__NA__";
+}
+
+const THAI_CATEGORY_KEYWORDS: Record<string, string[]> = {
+  FEMININE: ["ผู้หญิง", "สุภาพสตรี", "หญิง", "สาว", "เลดี้", "ผู้หญิงสาว"],
+  MASCULINE: ["ผู้ชาย", "สุภาพบุรุษ", "ชาย", "หนุ่ม", "บุรุษ", "แมน"],
+  CHILDREN: ["เด็ก", "เด็กชาย", "เด็กหญิง", "เด็กๆ", "เด็กน้อย", "วัยรุ่น"],
+};
+
+const THAI_COLOR_KEYWORDS: Record<string, string[]> = {
+  BLACK: ["ดำ", "ดํา", "สีดำ", "สีดํา", "ดำสนิท", "สีดำสนิท"],
+  WHITE: ["ขาว", "สีขาว", "ขาวล้วน", "สีขาวล้วน"],
+  BLUE: ["น้ำเงิน", "สีน้ำเงิน", "ฟ้า", "สีฟ้า", "คราม", "สีคราม", "บลู"],
+  RED: ["แดง", "สีแดง", "แดงสด", "สีแดงสด", "เรด"],
+  GREEN: ["เขียว", "สีเขียว", "กรีน"],
+  PINK: ["ชมพู", "สีชมพู", "พิ้งค์"],
+  PURPLE: ["ม่วง", "สีม่วง", "ม่วงลาเวนเดอร์", "สีม่วงลาเวนเดอร์"],
+  BEIGE: ["เบจ", "สีเบจ", "ครีม", "สีครีม", "นู้ด", "สีนู้ด"],
+  GRAY: ["เทา", "สีเทา", "เทาอ่อน", "สีเทาอ่อน", "เทาเข้ม", "สีเทาเข้ม", "เกรย์"],
+  BROWN: ["น้ำตาล", "สีน้ำตาล", "บราวน์"],
+};
+
+const THAI_SIZE_KEYWORDS: Record<string, string[]> = {
+  "S|M|L|XL": ["ฟรีไซส์", "ฟรีไซซ์", "free size", "freesize", "free-size"],
+  "XS|S|M|L|XL": ["ครบไซส์", "ทุกไซส์"],
+};
+
+function normalizeThaiText(value: string | null | undefined) {
+  if (!value) return "";
+  return value.toString().trim().toLowerCase();
+}
+
+function translateThaiCategory(value: string | null | undefined) {
+  if (!value) return "";
+  const trimmed = value.toString().trim();
+  if (!trimmed) return "";
+  const normalized = normalizeThaiText(trimmed);
+  for (const [mapped, keywords] of Object.entries(THAI_CATEGORY_KEYWORDS)) {
+    if (keywords.some((keyword) => normalized.includes(keyword))) {
+      return mapped;
+    }
+  }
+  if (["feminine", "masculine", "children"].includes(normalized)) {
+    return normalized.toUpperCase();
+  }
+  return trimmed;
+}
+
+function translateThaiColor(value: string | null | undefined) {
+  if (!value) return "";
+  const trimmed = value.toString().trim();
+  if (!trimmed) return "";
+  const normalized = normalizeThaiText(trimmed);
+  const condensed = normalized.replace(/\s+/g, "");
+  for (const [mapped, keywords] of Object.entries(THAI_COLOR_KEYWORDS)) {
+    if (
+      keywords.some(
+        (keyword) => normalized.includes(keyword) || condensed.includes(keyword.replace(/\s+/g, ""))
+      )
+    ) {
+      return mapped;
+    }
+  }
+  const upper = trimmed.toUpperCase();
+  if (THAI_COLOR_KEYWORDS[upper as keyof typeof THAI_COLOR_KEYWORDS]) {
+    return upper;
+  }
+  switch (upper) {
+    case "BLACK":
+    case "WHITE":
+    case "BLUE":
+    case "RED":
+    case "GREEN":
+    case "PINK":
+    case "PURPLE":
+    case "BEIGE":
+    case "GRAY":
+    case "GREY":
+    case "BROWN":
+      return upper === "GREY" ? "GRAY" : upper;
+    default:
+      return upper;
+  }
+}
+
+function translateThaiSizes(value: string | null | undefined) {
+  if (!value) return "";
+  const trimmed = value.toString().trim();
+  if (!trimmed) return "";
+  const normalized = normalizeThaiText(trimmed);
+  for (const [mapped, keywords] of Object.entries(THAI_SIZE_KEYWORDS)) {
+    if (keywords.some((keyword) => normalized.includes(keyword))) {
+      return mapped;
+    }
+  }
+  const upper = trimmed.toUpperCase();
+  if (upper.includes("|")) {
+    return upper;
+  }
+  const tokens = upper
+    .split(/[^A-Z0-9]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+  const allowedSizes = new Set(["XS", "S", "M", "L", "XL", "XXL"]);
+  if (tokens.length && tokens.every((token) => allowedSizes.has(token))) {
+    return tokens.join("|");
+  }
+  return upper;
+}
+
+function translateThaiProduct(product: ForecastRequest["product"]) {
+  return {
+    ...product,
+    category: translateThaiCategory(product.category),
+    color: translateThaiColor(product.color),
+    sizes: translateThaiSizes(product.sizes),
+  };
 }
 
 async function validateWithLlama(product: ForecastRequest["product"]): Promise<{ correctedProduct: Record<string, string> | null }> {
@@ -440,7 +550,10 @@ function buildNormalizedHistory(rows: string[][], detection: CsvColumnDetection)
   return result;
 }
 
-async function normalizeHistoricalCsv(content: string | null | undefined): Promise<CsvNormalizationResult | null> {
+async function normalizeHistoricalCsv(
+  content: string | null | undefined,
+  language: SupportedLanguage
+): Promise<CsvNormalizationResult | null> {
   if (!content) return null;
   const decoded = decodeCsvBase64(content);
   if (!decoded) return null;
@@ -466,7 +579,7 @@ async function normalizeHistoricalCsv(content: string | null | undefined): Promi
   const base64 = Buffer.from(csv, "utf8").toString("base64");
   const normalizedContent = `data:text/csv;base64,${base64}`;
 
-  const note = `CSV columns mapped (${detection.source === "llama" ? "LLM" : "fallback"}): ${detection.monthHeader}→month, ${detection.quantityHeader}→qty`;
+  const note = getMappingNote(detection, language);
   return {
     content: normalizedContent,
     note,
@@ -607,6 +720,9 @@ async function persistForecast(
           params,
           y_true: result.y_true ?? null,
           y_pred: result.y_pred ?? [],
+          summary: null,
+          summary_language: null,
+          summary_created_at: null,
           created_at: timestamp,
         })
         .select("id")
@@ -639,6 +755,9 @@ async function persistForecast(
       y_pred: result.y_pred ?? [],
       months: result.months ?? [],
       created_at: timestamp,
+      summary: null,
+      summary_language: null,
+      summary_created_at: null,
     };
 
     await fs.writeFile(
@@ -657,11 +776,13 @@ export async function POST(request: Request) {
     const raw = await request.json();
     console.log("[Forecast API] Payload:", JSON.stringify(raw, null, 2));
     const parsed = forecastRequestSchema.parse(raw);
+    const requestLanguage: SupportedLanguage = parsed.language === "th" ? "th" : "en";
+    const productWithThaiNormalization = translateThaiProduct(parsed.product);
 
     // Validate and normalize with Llama 3.3 70B
-    const validation = await validateWithLlama(parsed.product);
+    const validation = await validateWithLlama(productWithThaiNormalization);
     
-    let productToUse = { ...parsed.product };
+    let productToUse = { ...productWithThaiNormalization };
     
     if (validation.correctedProduct) {
       console.log("[Forecast] LLM corrected:", validation.correctedProduct);
@@ -739,27 +860,27 @@ export async function POST(request: Request) {
             const text = await response.text();
             salesCsvContent = `data:text/csv;base64,${Buffer.from(text, "utf8").toString("base64")}`;
           } else {
-            csvNotes.push("Uploaded CSV could not be downloaded; using fallback defaults.");
+            csvNotes.push(getCsvNote("downloadFailed", requestLanguage));
             console.warn("[Forecast] Failed to download CSV:", response.status, parsed.salesCsvUrl);
           }
         } catch (error) {
-          csvNotes.push("Uploaded CSV could not be downloaded; using fallback defaults.");
+          csvNotes.push(getCsvNote("downloadFailed", requestLanguage));
           console.warn("[Forecast] CSV fetch error:", error);
         }
       }
 
       try {
-        const normalizedCsv = await normalizeHistoricalCsv(salesCsvContent);
+        const normalizedCsv = await normalizeHistoricalCsv(salesCsvContent, requestLanguage);
         if (normalizedCsv) {
           salesCsvContent = normalizedCsv.content;
           if (normalizedCsv.note) {
             csvNotes.push(normalizedCsv.note);
           }
         } else if (salesCsvContent) {
-          csvNotes.push("CSV headers could not be mapped automatically; continuing with uploaded columns.");
+          csvNotes.push(getCsvNote("mappingFallback", requestLanguage));
         }
       } catch (error) {
-        csvNotes.push("CSV analysis failed; continuing with uploaded data.");
+        csvNotes.push(getCsvNote("analysisFailed", requestLanguage));
         console.warn("[Forecast] CSV normalization error:", error);
       }
     }

@@ -144,6 +144,8 @@ export const dictionaries = {
       modelSummary: {
         separator: " · ",
       },
+      insightHeading: "AI Insight",
+      insightLoading: "Generating insight…",
       badges: {
         live: "Live Model",
         heuristic: "Heuristic",
@@ -179,6 +181,8 @@ export const dictionaries = {
           cost: "Cost",
           firstSale: "First Sale",
         },
+        insightHeading: "AI Insight",
+        insightEmpty: "Run an insight from the forecast page to capture a summary here.",
       },
       chart: {
         noData: "No forecast data available yet.",
@@ -364,6 +368,8 @@ export const dictionaries = {
       modelSummary: {
         separator: " · ",
       },
+      insightHeading: "สรุปเชิงลึกจาก AI",
+      insightLoading: "กำลังสร้างสรุป...",
       badges: {
         live: "โมเดลจริง",
         heuristic: "เฮอร์ริสติก",
@@ -399,6 +405,8 @@ export const dictionaries = {
           cost: "ต้นทุน",
           firstSale: "ขายครั้งแรก",
         },
+        insightHeading: "สรุปเชิงลึกจาก AI",
+        insightEmpty: "สร้างสรุปจากหน้าผลคาดการณ์เพื่อให้แสดงที่นี่",
       },
       chart: {
         noData: "ยังไม่มีข้อมูลคาดการณ์สำหรับกราฟ",

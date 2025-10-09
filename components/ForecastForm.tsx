@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ChangeEvent } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { clsx } from "clsx";
 import Image from "next/image";
@@ -42,7 +42,7 @@ const sampleEditorialImage =
 
 export default function ForecastForm() {
   const supabaseEnabled = isSupabaseConfigured("anon");
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const renderError = useCallback(
     (message?: string | null) => {
       if (!message) return null;
@@ -64,6 +64,79 @@ export default function ForecastForm() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving">("idle");
+  const [insight, setInsight] = useState<string>("");
+  const [isInsightStreaming, setIsInsightStreaming] = useState(false);
+
+  useEffect(() => {
+    if (!forecastResult?.forecastId) {
+      setInsight(forecastResult?.summary ?? "");
+      setIsInsightStreaming(false);
+      return;
+    }
+
+    const baseSummary = forecastResult?.summary ?? "";
+    setInsight(baseSummary);
+
+    if (baseSummary) {
+      setIsInsightStreaming(false);
+      return;
+    }
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const run = async () => {
+      try {
+        setIsInsightStreaming(true);
+        const langParam = language === "th" ? "th" : "en";
+        const response = await fetch(
+          `/api/forecast/${forecastResult.forecastId}/insight?lang=${langParam}`,
+          { signal: controller.signal }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Insight request failed (${response.status})`);
+        }
+
+        if (!response.body) {
+          throw new Error("Insight stream missing body");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let accumulated = "";
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) {
+            accumulated += decoder.decode();
+            break;
+          }
+          accumulated += decoder.decode(value, { stream: true });
+          if (!cancelled) {
+            setInsight(accumulated);
+          }
+        }
+        if (!cancelled) {
+          setInsight(accumulated.trim());
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("[ForecastForm] Insight stream error:", error);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsInsightStreaming(false);
+        }
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [forecastResult?.forecastId, forecastResult?.summary, language]);
 
   const {
     register,
@@ -180,6 +253,8 @@ export default function ForecastForm() {
     setIsSubmitting(true);
     setErrorMessage(null);
     setStatusMessage(null);
+    setInsight("");
+    setIsInsightStreaming(false);
 
     console.log("[ForecastForm] Submitting with values:", values);
 
@@ -206,6 +281,7 @@ export default function ForecastForm() {
         salesCsvContent: csv?.base64 ?? null,
         imageUrl: image?.url ?? null,
         imageBase64: image?.base64 ?? null,
+        language,
       };
 
       const response = await fetch("/api/forecast", {
@@ -305,6 +381,8 @@ export default function ForecastForm() {
     setForecastResult(null);
     setStatusMessage(null);
     setErrorMessage(null);
+    setInsight("");
+    setIsInsightStreaming(false);
   }, [imagePreview, reset]);
 
   const handleSave = useCallback(async () => {
@@ -628,6 +706,8 @@ export default function ForecastForm() {
           onSave={handleSave}
           isSaving={saveState === "saving"}
           statusMessage={statusMessage}
+          insight={insight}
+          isInsightStreaming={isInsightStreaming}
         />
       ) : null}
     </div>

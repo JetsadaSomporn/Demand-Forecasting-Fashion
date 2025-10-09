@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { clsx } from "clsx";
+import { Sparkles } from "lucide-react";
 import MinimalChart from "./MinimalChart";
 import { cardClassName, headingClassName, subtleTextClassName } from "@/lib/theme";
 import type { ForecastDetail } from "@/lib/queries";
@@ -25,6 +26,12 @@ function formatLabel(value: string, locale: string) {
 type HistoryTableProps = {
   entries: ForecastDetail[];
   initialId?: string;
+};
+
+type InsightCacheEntry = {
+  summary: string;
+  language: "en" | "th";
+  timestamp: string | null;
 };
 
 export default function HistoryTable({ entries, initialId }: HistoryTableProps) {
@@ -56,9 +63,152 @@ export default function HistoryTable({ entries, initialId }: HistoryTableProps) 
     return entries[0];
   }, [entries, initialId]);
 
+  const [insightCache, setInsightCache] = useState<Record<string, InsightCacheEntry>>({});
   const [selected, setSelected] = useState<ForecastDetail | undefined>(
     defaultEntry
   );
+  const [insight, setInsight] = useState<string>(defaultEntry?.summary ?? "");
+  const [summaryTimestamp, setSummaryTimestamp] = useState<string | null>(
+    defaultEntry?.summary_created_at ?? null
+  );
+  const [isInsightStreaming, setIsInsightStreaming] = useState(false);
+
+  useEffect(() => {
+    if (!selected) {
+      setInsight("");
+      setSummaryTimestamp(null);
+      setIsInsightStreaming(false);
+      return;
+    }
+
+    const storedSummary = selected.summary ?? "";
+    const storedTimestamp = selected.summary_created_at ?? null;
+    const matchesLanguage =
+      Boolean(storedSummary.trim()) && selected.summary_language === language;
+
+    const cached = insightCache[selected.id];
+    const languageCode: "en" | "th" = language === "th" ? "th" : "en";
+
+    if (cached && cached.language === languageCode) {
+      setInsight(cached.summary);
+      setSummaryTimestamp(cached.timestamp ?? null);
+      setIsInsightStreaming(false);
+      return;
+    }
+
+    if (matchesLanguage) {
+      setInsight(storedSummary);
+      setSummaryTimestamp(storedTimestamp);
+      setIsInsightStreaming(false);
+      setInsightCache((prev) => {
+        const existing = prev[selected.id];
+        if (
+          existing &&
+          existing.language === languageCode &&
+          existing.summary === storedSummary &&
+          existing.timestamp === storedTimestamp
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [selected.id]: {
+            summary: storedSummary,
+            language: languageCode,
+            timestamp: storedTimestamp,
+          },
+        };
+      });
+      return;
+    }
+
+    setInsight(storedSummary);
+    setSummaryTimestamp(storedTimestamp);
+
+    if (!selected.id) {
+      setIsInsightStreaming(false);
+      return;
+    }
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const run = async () => {
+      try {
+        setIsInsightStreaming(true);
+        const response = await fetch(
+          `/api/forecast/${selected.id}/insight?lang=${languageCode}`,
+          { signal: controller.signal }
+        );
+
+        if (!response.ok || !response.body) {
+          throw new Error("Insight request failed");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) {
+            buffer += decoder.decode();
+            break;
+          }
+          buffer += decoder.decode(value, { stream: true });
+          if (!cancelled) {
+            setInsight(buffer);
+          }
+        }
+
+        if (!cancelled) {
+          const finalSummary = buffer.trim();
+          setInsight(finalSummary);
+          const timestamp = new Date().toISOString();
+          setSummaryTimestamp(timestamp);
+          setInsightCache((prev) => ({
+            ...prev,
+            [selected.id]: {
+              summary: finalSummary,
+              language: languageCode,
+              timestamp,
+            },
+          }));
+          setSelected((prev) => {
+            if (!prev || prev.id !== selected.id) return prev;
+            if (
+              prev.summary === finalSummary &&
+              prev.summary_language === languageCode &&
+              prev.summary_created_at === timestamp
+            ) {
+              return prev;
+            }
+            return {
+              ...prev,
+              summary: finalSummary,
+              summary_language: languageCode,
+              summary_created_at: timestamp,
+            };
+          });
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("[HistoryTable] Insight stream error:", error);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsInsightStreaming(false);
+        }
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [selected, language, insightCache]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
@@ -164,6 +314,22 @@ export default function HistoryTable({ entries, initialId }: HistoryTableProps) 
                 </span>
               </div>
             </div>
+          </div>
+
+          <div className="rounded-3xl border border-border/70 bg-surface px-5 py-5 shadow-[0_12px_32px_rgba(31,27,23,0.08)]">
+            <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.35em] text-foreground/60">
+              <Sparkles className="h-4 w-4 text-accent" />
+              <span>{t("history.detail.insightHeading")}</span>
+            </div>
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+              {insight.trim() ? insight : t("history.detail.insightEmpty")}
+              {isInsightStreaming ? <span className="animate-pulse"> ▍</span> : null}
+            </p>
+            {summaryTimestamp ? (
+              <p className="mt-2 text-xs text-foreground-muted">
+                {formatCreatedAt(summaryTimestamp)}
+              </p>
+            ) : null}
           </div>
 
           <MinimalChart
