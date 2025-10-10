@@ -993,8 +993,10 @@ export async function POST(request: Request) {
         ? externalResult
         : await runRemoteInference(pythonPayload);
 
-    if (pythonResult.error && !pythonResult.y_pred) {
-      return NextResponse.json(pythonResult, { status: 400 });
+    if ("error" in pythonResult && pythonResult.error && !pythonResult.y_pred) {
+      return NextResponse.json(pythonResult as unknown as Record<string, unknown>, {
+        status: 400,
+      });
     }
 
     const warningMessages = [...csvNotes, pythonResult.warning]
