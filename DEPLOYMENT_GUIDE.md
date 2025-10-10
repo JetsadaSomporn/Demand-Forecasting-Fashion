@@ -61,6 +61,7 @@ NVIDIA_API_KEY=nvapi-your_nvidia_api_key_here
 #### Forecast Microservice (Required for production forecasts)
 ```
 FORECAST_SERVICE_URL=https://your-hf-space-or-service
+NEXT_PUBLIC_FORECAST_SERVICE_URL=https://your-hf-space-or-service
 # FORECAST_SERVICE_TOKEN=optional_bearer_token_if_required
 ```
 

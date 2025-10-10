@@ -13,6 +13,7 @@ import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase";
 import { cardClassName, headingClassName, subtleTextClassName } from "@/lib/theme";
 import { z } from "zod";
 import { useTranslation } from "@/lib/i18n/client";
+import { fetchForecastFromSpace } from "@/lib/forecast-space-client";
 
 const FORM_SCHEMA = forecastRequestSchema.pick({ horizon: true, product: true });
 
@@ -35,6 +36,10 @@ async function fileToBase64(file: File) {
 
 const sampleEditorialImage =
   "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=720&q=80";
+
+// ตั้งค่า NEXT_PUBLIC_FORECAST_SERVICE_URL เพื่อให้ฟอร์มเรียก Hugging Face Space โดยตรง
+// (หลบ timeout ของ Vercel serverless). ถ้าไม่ได้ตั้ง จะ fallback ไปใช้ API route เดิม.
+const FORECAST_SPACE_BASE = process.env.NEXT_PUBLIC_FORECAST_SERVICE_URL?.trim() || null;
 
 export default function ForecastForm() {
   const supabaseEnabled = isSupabaseConfigured("anon");
@@ -284,20 +289,31 @@ const {
         language,
       };
 
-      const response = await fetch("/api/forecast", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      let forecast: ForecastResponse;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || t("forecastForm.errors.forecastFailed"));
+      if (FORECAST_SPACE_BASE) {
+        // NOTE: เรียกไปยัง Hugging Face Space โดยตรงเพื่อเลี่ยง server timeout
+        // ถ้าจะกลับมาใช้ API route ให้ลบ env นี้แล้ว fallback ด้านล่างจะทำงานทันที
+        forecast = await fetchForecastFromSpace(FORECAST_SPACE_BASE, payload);
+        // ตอนนี้ยังไม่ persist ลง Supabase (เพราะต้องผ่าน service role)
+        // ถ้าต้องการบันทึก ให้เพิ่มขั้นตอนเรียก API ภายในหลังได้ผลลัพธ์
+      } else {
+        const response = await fetch("/api/forecast", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || t("forecastForm.errors.forecastFailed"));
+        }
+
+        const json = await response.json();
+        forecast = forecastResponseSchema.parse(json);
       }
 
-      const json = await response.json();
-      const parsed = forecastResponseSchema.parse(json);
-      setForecastResult(parsed);
+      setForecastResult(forecast);
       setStatusMessage(t("forecastForm.status.forecastSaved"));
     } catch (error) {
       console.error(error);
