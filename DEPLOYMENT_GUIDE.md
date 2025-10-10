@@ -58,6 +58,12 @@ HF_TOKEN=hf_your_huggingface_token_here
 NVIDIA_API_KEY=nvapi-your_nvidia_api_key_here
 ```
 
+#### Forecast Microservice (Required for production forecasts)
+```
+FORECAST_SERVICE_URL=https://your-hf-space-or-service/run/predict
+# FORECAST_SERVICE_TOKEN=optional_bearer_token_if_required
+```
+
 #### App Configuration (Optional)
 ```
 NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
@@ -74,9 +80,8 @@ NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
 Click **"Deploy"** button - Vercel will:
 1. ✅ Clone your repository
 2. ✅ Install Node.js dependencies (`npm install`)
-3. ✅ Install Python dependencies (from `requirements.txt`)
-4. ✅ Build Next.js app (`npm run build`)
-5. ✅ Deploy to production URL
+3. ✅ Build Next.js app (`npm run build`)
+4. ✅ Deploy to production URL
 
 **Build Time:** ~3-5 minutes
 
@@ -92,13 +97,13 @@ After deployment succeeds:
 - [ ] Authentication works (Magic Link login)
 - [ ] Forecast API responds (`/api/forecast`)
 - [ ] Image extraction API works (`/api/extract-meta`)
-- [ ] Python inference runs successfully
+- [ ] Remote forecast service returns predictions
 - [ ] Database saves forecasts correctly
 
 #### 🔍 Check Logs
 - Go to Vercel Dashboard → Project → Logs
-- Monitor for errors during first requests
-- Python subprocess may take 5-10s on cold start (normal)
+- Ensure calls to the forecast microservice succeed (HTTP 200)
+- Remote service cold starts (e.g. Hugging Face Space) may take 5-10s on first run
 
 ---
 
@@ -113,12 +118,12 @@ After deployment succeeds:
 
 ## 🐛 Troubleshooting
 
-### Python Issues
-**Problem:** Python script fails  
+### Forecast Microservice
+**Problem:** Forecast API returns `spawn python3 ENOENT` or similar  
 **Solution:** 
-- Check `requirements.txt` versions match your local Python
-- Increase function timeout in `vercel.json` (max 60s for Hobby plan)
-- Check Vercel logs for Python errors
+- Ensure `FORECAST_SERVICE_URL` (and optional token) are set in Vercel
+- Verify external service is reachable and returning JSON
+- Re-deploy after updating environment variables
 
 ### Environment Variables
 **Problem:** API calls fail  

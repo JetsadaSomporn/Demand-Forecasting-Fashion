@@ -62,6 +62,8 @@ function getMappingNote(
 }
 
 const LOCAL_FORECAST_DIR = path.join(process.cwd(), ".data/forecasts");
+const FORECAST_SERVICE_URL = process.env.FORECAST_SERVICE_URL;
+const FORECAST_SERVICE_TOKEN = process.env.FORECAST_SERVICE_TOKEN;
 
 type PythonForecastResponse = {
   model: "lgbm_full" | "lgbm_meta";
@@ -587,7 +589,7 @@ async function normalizeHistoricalCsv(
   };
 }
 
-async function runPythonInference(payload: ForecastRequest) {
+async function runLocalPythonInference(payload: ForecastRequest): Promise<PythonForecastResponse> {
   return new Promise<PythonForecastResponse>((resolve, reject) => {
     const python = spawn("python3", ["python/infer.py"], {
       cwd: process.cwd(),
@@ -630,6 +632,59 @@ async function runPythonInference(payload: ForecastRequest) {
     python.stdin.write(JSON.stringify(payload));
     python.stdin.end();
   });
+}
+
+async function runRemoteInference(payload: ForecastRequest): Promise<PythonForecastResponse> {
+  if (!FORECAST_SERVICE_URL) {
+    return runLocalPythonInference(payload);
+  }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (FORECAST_SERVICE_TOKEN) {
+    headers.Authorization = `Bearer ${FORECAST_SERVICE_TOKEN}`;
+  }
+
+  const body = JSON.stringify({ data: [payload] });
+
+  const response = await fetch(FORECAST_SERVICE_URL, {
+    method: "POST",
+    headers,
+    body,
+    cache: "no-store",
+  });
+
+  const rawText = await response.text();
+
+  let parsedJson: unknown;
+  try {
+    parsedJson = rawText ? JSON.parse(rawText) : {};
+  } catch (error) {
+    throw new Error(
+      `Forecast service returned invalid JSON (${(error as Error).message}): ${rawText.slice(0, 200)}`
+    );
+  }
+
+  if (!response.ok) {
+    const serviceError =
+      typeof parsedJson === "object" && parsedJson && "error" in parsedJson && parsedJson.error
+        ? String((parsedJson as { error: unknown }).error)
+        : rawText || `HTTP ${response.status}`;
+    throw new Error(`Forecast service error: ${serviceError}`);
+  }
+
+  const resultCandidate =
+    typeof parsedJson === "object" && parsedJson && "data" in parsedJson && Array.isArray((parsedJson as { data: unknown }).data)
+      ? (parsedJson as { data: unknown[] }).data[0]
+      : parsedJson;
+
+  if (!resultCandidate || typeof resultCandidate !== "object") {
+    throw new Error("Forecast service returned an empty response");
+  }
+
+  return resultCandidate as PythonForecastResponse;
 }
 
 async function persistForecast(
@@ -895,7 +950,7 @@ export async function POST(request: Request) {
       salesCsvContent: salesCsvContent,
     };
 
-    const pythonResult = await runPythonInference(pythonPayload);
+    const pythonResult = await runRemoteInference(pythonPayload);
 
     if (pythonResult.error && !pythonResult.y_pred) {
       return NextResponse.json(pythonResult, { status: 400 });
