@@ -70,54 +70,53 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-8 px-6 bg-white">
-      <div className="space-y-3 text-center">
-        <h1 className="text-[clamp(1.5rem,3vw,2rem)] font-bold uppercase tracking-[0.2em] text-gray-900">
-          {t("login.title")}
-        </h1>
-        <p className="text-sm leading-relaxed text-gray-600">{t("login.description")}</p>
+    <div className="flex min-h-screen w-full items-center justify-center bg-white px-6">
+      <div className="w-full max-w-[340px] space-y-6">
+        {/* Clean heading - just "Sign In" */}
+        <div>
+          <h1 className="text-[28px] font-light tracking-tight text-gray-900">
+            Sign In
+          </h1>
+        </div>
+
+        {/* Form with minimal styling */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-[13px] font-light text-gray-600" htmlFor="email">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder=""
+              className="mt-0.5 w-full rounded-md bg-gray-200/70 px-3 py-2 text-[15px] font-light text-gray-900 outline-none transition placeholder:text-gray-400 hover:bg-gray-200 focus:bg-gray-200"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="mt-6 w-full rounded bg-blue-600 px-4 py-2.5 text-[13px] font-normal text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSubmitting ? "Sending..." : "Next"}
+          </button>
+        </form>
+
+        {/* Minimal alert messages */}
+        {message ? (
+          <div className="text-[13px] font-light text-blue-600">
+            {message.key ? t(message.key) : message.raw}
+          </div>
+        ) : null}
+        {error ? (
+          <div className="text-[13px] font-light text-red-600">
+            {error.key ? t(error.key) : error.raw}
+          </div>
+        ) : null}
       </div>
-      <form onSubmit={handleSubmit} className="space-y-6 rounded-[28px] border-2 border-gray-200 bg-white p-8 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-        <label className="flex flex-col gap-2">
-          <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
-            {t("login.emailLabel")}
-          </span>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder={t("login.emailPlaceholder")}
-            className="rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-base text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
-          />
-        </label>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-full border-2 border-blue-600 bg-blue-600 px-8 py-3 text-sm font-bold uppercase tracking-[0.3em] shadow-[0_8px_16px_rgba(37,99,235,0.2)] transition hover:-translate-y-0.5 hover:bg-blue-700 hover:border-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-          style={{ color: '#FFFFFF' }}
-        >
-          {isSubmitting ? t("login.sendingLink") : t("login.sendLink")}
-        </button>
-      </form>
-      {message ? (
-        <div className="rounded-2xl border-2 border-blue-200 bg-blue-50 px-5 py-4 text-sm text-blue-700">
-          {message
-            ? message.key
-              ? t(message.key)
-              : message.raw
-            : null}
-        </div>
-      ) : null}
-      {error ? (
-        <div className="rounded-2xl border-2 border-red-300 bg-red-50 px-5 py-4 text-sm text-red-700">
-          {error
-            ? error.key
-              ? t(error.key)
-              : error.raw
-            : null}
-        </div>
-      ) : null}
     </div>
   );
 }
