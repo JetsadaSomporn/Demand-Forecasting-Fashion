@@ -218,11 +218,12 @@ Mention if demand accelerates, stabilises, or declines, and suggest next actions
 
 function createStreamingResponse(text: string) {
   const encoder = new TextEncoder();
-  const chunks = text.match(/.{1,14}\s?/g) ?? [text];
+  const tokens = text.match(/\S+\s*/g) ?? [text];
+
   const stream = new ReadableStream({
     async start(controller) {
-      for (const chunk of chunks) {
-        controller.enqueue(encoder.encode(chunk));
+      for (const token of tokens) {
+        controller.enqueue(encoder.encode(token));
         await new Promise((resolve) => setTimeout(resolve, 45));
       }
       controller.close();
