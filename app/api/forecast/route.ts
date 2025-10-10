@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { spawn } from "child_process";
 import { randomUUID } from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
@@ -589,54 +588,9 @@ async function normalizeHistoricalCsv(
   };
 }
 
-async function runLocalPythonInference(payload: ForecastRequest): Promise<PythonForecastResponse> {
-  return new Promise<PythonForecastResponse>((resolve, reject) => {
-    const python = spawn("python3", ["python/infer.py"], {
-      cwd: process.cwd(),
-      env: {
-        ...process.env,
-        PYTHONUNBUFFERED: "1",
-      },
-    });
-
-    let stdout = "";
-    let stderr = "";
-
-    python.stdout.on("data", (data) => {
-      stdout += data.toString();
-    });
-
-    python.stderr.on("data", (data) => {
-      stderr += data.toString();
-    });
-
-    python.on("close", (code) => {
-      if (code !== 0) {
-        return reject(
-          new Error(stderr || `Python exited with status ${code ?? "unknown"}`)
-        );
-      }
-
-      try {
-        const parsed = JSON.parse(stdout || "{}");
-        resolve(parsed as PythonForecastResponse);
-      } catch {
-        reject(new Error(`Failed to parse python output: ${stdout}`));
-      }
-    });
-
-    python.on("error", (error) => {
-      reject(error);
-    });
-
-    python.stdin.write(JSON.stringify(payload));
-    python.stdin.end();
-  });
-}
-
 async function runRemoteInference(payload: ForecastRequest): Promise<PythonForecastResponse> {
   if (!FORECAST_SERVICE_URL) {
-    return runLocalPythonInference(payload);
+    throw new Error("FORECAST_SERVICE_URL environment variable is not configured");
   }
 
   const headers: Record<string, string> = {
