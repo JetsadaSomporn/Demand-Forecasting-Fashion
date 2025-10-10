@@ -38,12 +38,12 @@ export const dictionaries = {
       heroBadge: "Auto model switching",
       heroTitle: "Fashion demand forecasting, streamlined.",
       heroDescription:
-        "Upload optional sales history and the app will pick the right LightGBM model automatically—historical when data is present, metadata when it is not.",
+        "Upload optional sales history and the app will pick the right model automatically—historical when data is present, metadata when it is not.",
       primaryAction: "Go Forecast",
       secondaryAction: "View History",
       selectionTitle: "Current selection",
       selectionDescription:
-        "Switches between Historical and No-Historical LightGBM based on uploaded data.",
+        "Switches between Historical and No-Historical models based on uploaded data.",
       latestTitle: "Latest forecasts",
       latestSubtitle: "Auto-saved snapshots with metrics and export-ready outputs.",
       browseHistory: "Browse history",
@@ -55,8 +55,8 @@ export const dictionaries = {
     models: {
       historicalShort: "Historical",
       metadataShort: "No-Historical",
-      historicalFull: "Historical LightGBM",
-      metadataFull: "No-Historical LightGBM",
+      historicalFull: "Historical Model",
+      metadataFull: "No-Historical Model",
       historicalDetail: "uses uploaded sales history",
       metadataDetail: "metadata + seasonality",
     },
@@ -80,7 +80,7 @@ export const dictionaries = {
     forecastForm: {
       heading: "Forecast",
       description:
-        "Add the basics about your product. Optional sales history instantly upgrades the model to the historical LightGBM variant.",
+        "Add the basics about your product. Optional sales history instantly upgrades the model to the historical variant.",
       activeModel: "Active model",
       csv: {
         label: "Recent sales CSV",
@@ -167,6 +167,7 @@ export const dictionaries = {
       emptyDescription:
         "Run your first forecast to see a complete history with metrics, charts, and exports.",
       table: {
+        description: "View all past forecasts with complete details and export options.",
         skuTitle: "SKU / Title",
         model: "Model",
         horizon: "Horizon",
@@ -262,7 +263,7 @@ export const dictionaries = {
       heroBadge: "สลับโมเดลอัตโนมัติ",
       heroTitle: "คาดการณ์ความต้องการแฟชั่นอย่างลื่นไหล",
       heroDescription:
-        "ถ้ามียอดขายย้อนหลัง ระบบจะเลือก LightGBM รุ่น Historical ให้อัตโนมัติ และจะใช้รุ่น Metadata เมื่อไม่มีข้อมูลยอดขาย",
+        "ถ้ามียอดขายย้อนหลัง ระบบจะเลือกโมเดล Historical ให้อัตโนมัติ และจะใช้โมเดล Metadata เมื่อไม่มีข้อมูลยอดขาย",
       primaryAction: "เริ่มคาดการณ์",
       secondaryAction: "ดูประวัติ",
       selectionTitle: "โมเดลที่ใช้อยู่",
@@ -279,8 +280,8 @@ export const dictionaries = {
     models: {
       historicalShort: "Historical",
       metadataShort: "No-Historical",
-      historicalFull: "Historical LightGBM",
-      metadataFull: "No-Historical LightGBM",
+      historicalFull: "Historical Model",
+      metadataFull: "No-Historical Model",
       historicalDetail: "ใช้ยอดขายที่อัปโหลด",
       metadataDetail: "ใช้ข้อมูลสินค้าและฤดูกาล",
     },
@@ -304,7 +305,7 @@ export const dictionaries = {
     forecastForm: {
       heading: "คาดการณ์",
       description:
-        "กรอกข้อมูลพื้นฐานของสินค้า หากเพิ่มยอดขายย้อนหลัง ระบบจะใช้โมเดล Historical LightGBM ให้ทันที",
+        "กรอกข้อมูลพื้นฐานของสินค้า หากเพิ่มยอดขายย้อนหลัง ระบบจะใช้โมเดล Historical ให้ทันที",
       activeModel: "โมเดลที่ใช้งาน",
       csv: {
         label: "ไฟล์ยอดขาย (CSV)",
@@ -391,6 +392,7 @@ export const dictionaries = {
       emptyDescription:
         "รันการคาดการณ์ครั้งแรกเพื่อดูประวัติพร้อมตัวชี้วัด กราฟ และไฟล์ดาวน์โหลด",
       table: {
+        description: "ดูผลคาดการณ์ที่ผ่านมาทั้งหมด พร้อมรายละเอียดและตัวเลือกส่งออก",
         skuTitle: "SKU / ชื่อสินค้า",
         model: "โมเดล",
         horizon: "ช่วงเวลา",

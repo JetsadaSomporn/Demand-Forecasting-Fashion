@@ -211,17 +211,28 @@ export default function HistoryTable({ entries, initialId }: HistoryTableProps) 
   }, [selected, language, insightCache]);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-      <div className={clsx(cardClassName, "overflow-hidden border-none bg-transparent p-0")}>
-        <table className="w-full border-separate border-spacing-0 text-left text-sm">
-          <thead>
-            <tr className="bg-surface-hover/60 text-foreground-muted">
-              <th className="px-4 py-3 font-medium">{t("history.table.skuTitle")}</th>
-              <th className="px-4 py-3 font-medium">{t("history.table.model")}</th>
-              <th className="px-4 py-3 font-medium">{t("history.table.horizon")}</th>
-              <th className="px-4 py-3 font-medium">{t("history.table.created")}</th>
-            </tr>
-          </thead>
+    <div className="min-h-screen bg-white py-24 px-6">
+      <div className="mx-auto max-w-7xl">
+        <header className="mb-8 space-y-2 text-left">
+          <h1 className="text-[13px] font-bold uppercase tracking-[0.35em] text-gray-900">
+            {t("nav.history")}
+          </h1>
+          <p className="max-w-xl text-xs leading-relaxed text-gray-600">
+            {t("history.table.description")}
+          </p>
+        </header>
+
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+          <div className="overflow-hidden rounded-[28px] border-2 border-gray-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+            <table className="w-full border-separate border-spacing-0 text-left text-sm">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-[0.25em] text-gray-700">{t("history.table.skuTitle")}</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-[0.25em] text-gray-700">{t("history.table.model")}</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-[0.25em] text-gray-700">{t("history.table.horizon")}</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-[0.25em] text-gray-700">{t("history.table.created")}</th>
+                </tr>
+              </thead>
           <tbody>
             {entries.map((entry) => {
               const isActive = selected?.id === entry.id;
@@ -230,31 +241,31 @@ export default function HistoryTable({ entries, initialId }: HistoryTableProps) 
                   key={entry.id}
                   onClick={() => setSelected(entry)}
                   className={clsx(
-                    "cursor-pointer border-t border-border/50 transition",
+                    "cursor-pointer border-t border-gray-200 transition",
                     isActive
-                      ? "bg-accent/10 text-foreground"
-                      : "hover:bg-surface-hover/40"
+                      ? "bg-blue-50 text-gray-900"
+                      : "hover:bg-gray-50"
                   )}
                 >
                   <td className="px-4 py-3">
                     <div className="flex flex-col">
-                      <span className="font-medium text-foreground">
+                      <span className="font-semibold text-gray-900">
                         {entry.product.title ?? entry.product.sku ?? t("dashboard.fallbackSku")}
                       </span>
-                      <span className="text-xs text-foreground-muted">
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-gray-600">
                         {entry.product.category ?? "–"} · {entry.product.color ?? "–"}
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-foreground-muted">
+                  <td className="px-4 py-3 text-xs text-gray-600">
                     {entry.model_name === "lgbm_full"
-                      ? t("models.historicalFull")
-                      : t("models.metadataFull")}
+                      ? t("models.historicalShort")
+                      : t("models.metadataShort")}
                   </td>
-                  <td className="px-4 py-3 text-foreground-muted">
+                  <td className="px-4 py-3 text-xs text-gray-600">
                     {t("common.horizon", { count: entry.horizon })}
                   </td>
-                  <td className="px-4 py-3 text-foreground-muted">
+                  <td className="px-4 py-3 text-xs text-gray-600">
                     {formatCreatedAt(entry.created_at)}
                   </td>
                 </tr>
@@ -265,58 +276,58 @@ export default function HistoryTable({ entries, initialId }: HistoryTableProps) 
       </div>
 
       {selected ? (
-        <div className={clsx(cardClassName, "flex flex-col gap-6 p-6")}>
-          <header className="space-y-1">
-            <h2 className={headingClassName}>
+        <div className="flex flex-col gap-6 rounded-[28px] border-2 border-gray-200 bg-white p-6 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+          <header className="space-y-2 border-b border-gray-200 pb-4">
+            <h2 className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
               {selected.product.title ?? selected.product.sku ?? t("history.detail.fallbackTitle")}
             </h2>
-            <p className={subtleTextClassName}>
+            <p className="text-[10px] uppercase tracking-[0.25em] text-gray-600">
               {selected.model_name === "lgbm_full"
-                ? t("models.historicalFull")
-                : t("models.metadataFull")}
+                ? t("models.historicalShort")
+                : t("models.metadataShort")}
               {" · "}
               {t("common.horizon", { count: selected.horizon })}
             </p>
           </header>
 
-          <div className="space-y-2 text-sm">
-            <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-3 text-sm">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <span className="text-foreground-muted">{t("history.detail.stats.category")}:</span>
-                <span className="ml-2 font-medium text-foreground">
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-500">{t("history.detail.stats.category")}:</span>
+                <span className="ml-2 font-semibold text-gray-900">
                   {selected.product.category ?? "—"}
                 </span>
               </div>
               <div>
-                <span className="text-foreground-muted">{t("history.detail.stats.color")}:</span>
-                <span className="ml-2 font-medium text-foreground">
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-500">{t("history.detail.stats.color")}:</span>
+                <span className="ml-2 font-semibold text-gray-900">
                   {selected.product.color ?? "—"}
                 </span>
               </div>
               <div>
-                <span className="text-foreground-muted">{t("history.detail.stats.sizes")}:</span>
-                <span className="ml-2 font-medium text-foreground">
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-500">{t("history.detail.stats.sizes")}:</span>
+                <span className="ml-2 font-semibold text-gray-900">
                   {selected.product.sizes ?? "—"}
                 </span>
               </div>
               <div>
-                <span className="text-foreground-muted">{t("history.detail.stats.cost")}:</span>
-                <span className="ml-2 font-medium text-foreground">
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-500">{t("history.detail.stats.cost")}:</span>
+                <span className="ml-2 font-semibold text-gray-900">
                   {selected.product.cost != null
                     ? numberFormatter.format(selected.product.cost)
                     : "—"}
                 </span>
               </div>
               <div className="col-span-2">
-                <span className="text-foreground-muted">{t("history.detail.stats.firstSale")}:</span>
-                <span className="ml-2 font-medium text-foreground">
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-500">{t("history.detail.stats.firstSale")}:</span>
+                <span className="ml-2 font-semibold text-gray-900">
                   {selected.product.first_sale_month ?? "—"}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-border/70 bg-surface px-5 py-5 shadow-[0_12px_32px_rgba(31,27,23,0.08)]">
+          <div className="rounded-2xl border-2 border-gray-200 bg-gray-50 px-5 py-5 shadow-sm">
             <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.35em] text-foreground/60">
               <Sparkles className="h-4 w-4 text-accent" />
               <span>{t("history.detail.insightHeading")}</span>
@@ -341,13 +352,16 @@ export default function HistoryTable({ entries, initialId }: HistoryTableProps) 
           {selected.id ? (
             <a
               href={`/api/export?forecastId=${selected.id}`}
-              className="mt-auto inline-flex w-fit items-center gap-2 rounded-full border border-border/60 px-5 py-2 text-sm font-semibold text-foreground transition hover:border-accent"
+              className="mt-auto inline-flex w-fit items-center gap-2 rounded-full border-2 border-blue-600 bg-blue-600 px-6 py-3 text-xs font-bold uppercase tracking-[0.3em] shadow-[0_8px_16px_rgba(37,99,235,0.2)] transition hover:-translate-y-0.5 hover:bg-blue-700 hover:border-blue-700"
+              style={{ color: '#FFFFFF' }}
             >
               {t("common.csvDownload")}
             </a>
           ) : null}
         </div>
       ) : null}
+        </div>
+      </div>
     </div>
   );
 }

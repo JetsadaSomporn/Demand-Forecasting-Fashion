@@ -194,7 +194,7 @@ function buildSummaryPrompt(record: LoadedForecast, language: "en" | "th") {
       ? "ตอบเป็นภาษาไทยแบบกระชับ มืออาชีพ ไม่เกิน 3 ประโยค เน้นมุมมองสินค้าและสต๊อกที่ทำได้จริง"
       : "Respond in concise, professional English (max 3 sentences) with actionable merchandising takeaways.";
 
-  return `You are a fashion merchandising analyst. Summarize the forecast result for stakeholders without mentioning the forecasting model or LightGBM.
+  return `You are a fashion merchandising analyst. Summarize the forecast result for stakeholders without mentioning the technical details of the forecasting model.
 
 Product: ${record.productLabel}
 Horizon: ${record.horizon} months

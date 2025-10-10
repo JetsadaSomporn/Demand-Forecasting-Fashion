@@ -464,28 +464,34 @@ const {
   }, [forecastResult?.forecastId, t]);
 
   const inputClassName =
-    "rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-accent";
+    "rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20";
   const fileInputClassName =
-    "block w-full cursor-pointer rounded-xl border border-dashed border-border px-4 py-3 text-sm text-foreground-muted transition hover:border-accent focus:border-accent";
+    "block w-full cursor-pointer rounded-xl border-2 border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 transition hover:border-gray-400 focus:border-blue-600";
 
   return (
-    <div className="space-y-10">
-      <section className={clsx(cardClassName, "p-6 lg:p-10")}>
-        <header className="space-y-2">
-          <h1 className={headingClassName}>{t("forecastForm.heading")}</h1>
-          <p className={subtleTextClassName}>{t("forecastForm.description")}</p>
+    <div className="min-h-screen bg-white py-24 px-6">
+      <div className="mx-auto max-w-7xl">
+        <header className="mb-8 space-y-2 text-left">
+          <h1 className="text-[13px] font-bold uppercase tracking-[0.35em] text-gray-900">
+            {t("forecastForm.heading")}
+          </h1>
+          <p className="max-w-xl text-xs leading-relaxed text-gray-600">
+            {t("forecastForm.description")}
+          </p>
         </header>
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(260px,300px),1fr]">
+        <div className="grid gap-8 lg:grid-cols-2">
           <aside className="space-y-4">
-            <div className="rounded-2xl border border-border bg-surface-hover p-4">
-              <div className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-foreground">{t("forecastForm.image.label")}</span>
-                <span className="text-xs text-foreground-muted">
+            <div className="rounded-[28px] border-2 border-gray-200 bg-white p-6 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+              <div className="flex flex-col gap-2 text-sm">
+                <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
+                  {t("forecastForm.image.label")}
+                </span>
+                <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
                   {t("forecastForm.image.optional")}
                 </span>
               </div>
-              <div className="relative mt-4 flex h-64 w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-background">
+              <div className="relative mt-4 flex h-96 w-full items-center justify-center overflow-hidden rounded-[20px] border-2 border-dashed border-gray-300 bg-gray-50">
                 {imagePreview ? (
                   <Image
                     src={imagePreview}
@@ -520,7 +526,7 @@ const {
                 />
               </div>
               {imageFile ? (
-                <p className="mt-2 text-xs text-foreground-muted" aria-live="polite">
+                <p className="mt-3 text-[10px] uppercase tracking-[0.25em] text-gray-600" aria-live="polite">
                   {imageFile.name}
                 </p>
               ) : null}
@@ -528,7 +534,7 @@ const {
                 type="button"
                 onClick={handleExtract}
                 disabled={isExtracting}
-                className="mt-3 w-full rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-4 w-full rounded-full border-2 border-gray-900 bg-gray-900 px-6 py-3 text-xs font-bold uppercase tracking-[0.3em] text-white shadow-[0_8px_16px_rgba(0,0,0,0.15)] transition hover:-translate-y-0.5 hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
               >
                 {isExtracting
                   ? t("forecastForm.image.extracting")
@@ -541,10 +547,10 @@ const {
             <div className="grid gap-6 sm:grid-cols-2">
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
                     {t("forecastForm.fields.horizon")}
                   </span>
-                  <span className="text-xs text-foreground-muted">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
                     {t("forecastForm.examples.horizon")}
                   </span>
                 </div>
@@ -564,10 +570,10 @@ const {
 
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
                     {t("forecastForm.fields.sku")}
                   </span>
-                  <span className="text-xs text-foreground-muted">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
                     {t("forecastForm.examples.sku")}
                   </span>
                 </div>
@@ -580,10 +586,10 @@ const {
 
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
                     {t("forecastForm.fields.title")}
                   </span>
-                  <span className="text-xs text-foreground-muted">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
                     {t("forecastForm.examples.title")}
                   </span>
                 </div>
@@ -596,10 +602,10 @@ const {
 
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
                     {t("forecastForm.fields.category")}
                   </span>
-                  <span className="text-xs text-foreground-muted">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
                     {t("forecastForm.examples.category")}
                   </span>
                 </div>
@@ -617,10 +623,10 @@ const {
 
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
                     {t("forecastForm.fields.color")}
                   </span>
-                  <span className="text-xs text-foreground-muted">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
                     {t("forecastForm.examples.color")}
                   </span>
                 </div>
@@ -638,10 +644,10 @@ const {
 
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
                     {t("forecastForm.fields.sizes")}
                   </span>
-                  <span className="text-xs text-foreground-muted">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
                     {t("forecastForm.examples.sizes")}
                   </span>
                 </div>
@@ -659,10 +665,10 @@ const {
 
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
                     {t("forecastForm.fields.cost")}
                   </span>
-                  <span className="text-xs text-foreground-muted">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
                     {t("forecastForm.examples.cost")}
                   </span>
                 </div>
@@ -682,10 +688,10 @@ const {
 
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
                     {t("forecastForm.fields.firstSaleMonth")}
                   </span>
-                  <span className="text-xs text-foreground-muted">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
                     {t("forecastForm.examples.firstSaleMonth")}
                   </span>
                 </div>
@@ -697,12 +703,12 @@ const {
               </label>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-baseline justify-between text-sm">
-                <span className="font-medium text-foreground">
+            <div className="space-y-3 pt-4">
+              <div className="flex items-baseline justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
                   {t("forecastForm.csv.label")}
                 </span>
-                <span className="text-xs text-foreground-muted">
+                <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
                   {t("forecastForm.csv.optional")}
                 </span>
               </div>
@@ -713,23 +719,23 @@ const {
                 className={fileInputClassName}
               />
               {csvFile ? (
-                <p className="text-xs text-foreground-muted" aria-live="polite">
+                <p className="text-[10px] uppercase tracking-[0.25em] text-gray-600" aria-live="polite">
                   {csvFile.name}
                 </p>
               ) : null}
             </div>
 
             {errorMessage ? (
-              <div className="rounded-2xl border border-red-200/70 bg-red-50/70 px-4 py-3 text-sm text-red-600 shadow-sm">
+              <div className="rounded-2xl border-2 border-red-300 bg-red-50 px-5 py-4 text-sm text-red-700 shadow-sm">
                 {errorMessage}
               </div>
             ) : null}
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-4 pt-4">
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="rounded-full border border-accent bg-accent px-6 py-2 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full border-2 border-blue-600 bg-blue-600 px-8 py-3 text-xs font-bold uppercase tracking-[0.3em] text-white shadow-[0_8px_16px_rgba(37,99,235,0.2)] transition hover:-translate-y-0.5 hover:bg-blue-700 hover:border-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
               >
                 {isSubmitting
                   ? t("forecastForm.buttons.running")
@@ -738,25 +744,27 @@ const {
               <button
                 type="button"
                 onClick={handleReset}
-                className="rounded-full border border-border px-6 py-2 text-sm font-semibold text-foreground transition hover:border-accent"
+                className="rounded-full border-2 border-gray-300 bg-white px-8 py-3 text-xs font-bold uppercase tracking-[0.3em] text-gray-900 transition hover:-translate-y-0.5 hover:border-gray-400"
               >
                 {t("forecastForm.buttons.reset")}
               </button>
             </div>
           </form>
         </div>
-      </section>
 
-      {forecastResult ? (
-        <ForecastResult
-          data={forecastResult}
-          onSave={handleSave}
-          isSaving={saveState === "saving"}
-          statusMessage={statusMessage}
-          insight={insight}
-          isInsightStreaming={isInsightStreaming}
-        />
-      ) : null}
+        {forecastResult ? (
+          <div className="mt-12">
+            <ForecastResult
+              data={forecastResult}
+              onSave={handleSave}
+              isSaving={saveState === "saving"}
+              statusMessage={statusMessage}
+              insight={insight}
+              isInsightStreaming={isInsightStreaming}
+            />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
