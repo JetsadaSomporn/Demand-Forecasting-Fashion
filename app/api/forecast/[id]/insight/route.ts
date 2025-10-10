@@ -90,8 +90,67 @@ async function loadForecast(id: string): Promise<LoadedForecast | null> {
 }
 
 function buildSummaryPrompt(record: LoadedForecast, language: "en" | "th") {
-  const pairs = record.months.map((month, index) => {
-    const rawValue = Number((record.y_pred ?? [])[index]);
+  const normalizeMonths = (months: unknown): string[] => {
+    if (Array.isArray(months)) {
+      return months.map((month) => (typeof month === "string" ? month : String(month)));
+    }
+    if (months && typeof months === "object") {
+      return Object.values(months)
+        .map((month) => (typeof month === "string" ? month : String(month ?? "")))
+        .filter((month) => month.length > 0);
+    }
+    if (typeof months === "string") {
+      try {
+        const parsed = JSON.parse(months);
+        return normalizeMonths(parsed);
+      } catch {
+        return months.split(",").map((month) => month.trim());
+      }
+    }
+    return [];
+  };
+
+  const normalizeNumbers = (values: unknown): number[] => {
+    const coerce = (input: unknown) => {
+      if (typeof input === "number") return input;
+      if (typeof input === "string") {
+        const parsed = Number(input);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+      return 0;
+    };
+
+    if (Array.isArray(values)) {
+      return values.map(coerce);
+    }
+
+    if (values && typeof values === "object") {
+      return Object.values(values).map(coerce);
+    }
+
+    if (typeof values === "string") {
+      try {
+        const parsed = JSON.parse(values);
+        return normalizeNumbers(parsed);
+      } catch {
+        return values
+          .split(",")
+          .map((token) => token.trim())
+          .map((token) => {
+            const parsed = Number(token);
+            return Number.isFinite(parsed) ? parsed : 0;
+          });
+      }
+    }
+
+    return [];
+  };
+
+  const months = normalizeMonths(record.months);
+  const predictions = normalizeNumbers(record.y_pred);
+
+  const pairs = months.map((month, index) => {
+    const rawValue = predictions[index];
     const value = Number.isFinite(rawValue) ? rawValue : 0;
     return { month, value };
   });
