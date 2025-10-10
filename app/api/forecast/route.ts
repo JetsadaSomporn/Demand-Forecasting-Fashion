@@ -593,6 +593,9 @@ async function runRemoteInference(payload: ForecastRequest): Promise<PythonForec
     throw new Error("FORECAST_SERVICE_URL environment variable is not configured");
   }
 
+  const baseUrl = FORECAST_SERVICE_URL.replace(/\/+$/, "");
+  const invokeUrl = `${baseUrl}/gradio_api/call/predict`;
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -601,9 +604,9 @@ async function runRemoteInference(payload: ForecastRequest): Promise<PythonForec
     headers.Authorization = `Bearer ${FORECAST_SERVICE_TOKEN}`;
   }
 
-  const body = JSON.stringify({ data: [payload] });
+  const body = JSON.stringify({ data: [JSON.stringify(payload)] });
 
-  const response = await fetch(FORECAST_SERVICE_URL, {
+  const response = await fetch(invokeUrl, {
     method: "POST",
     headers,
     body,
@@ -612,33 +615,105 @@ async function runRemoteInference(payload: ForecastRequest): Promise<PythonForec
 
   const rawText = await response.text();
 
-  let parsedJson: unknown;
+  if (!response.ok) {
+    throw new Error(`Forecast service error: ${rawText || response.statusText}`);
+  }
+
+  let startPayload: unknown;
   try {
-    parsedJson = rawText ? JSON.parse(rawText) : {};
+    startPayload = rawText ? JSON.parse(rawText) : {};
   } catch (error) {
     throw new Error(
       `Forecast service returned invalid JSON (${(error as Error).message}): ${rawText.slice(0, 200)}`
     );
   }
 
-  if (!response.ok) {
-    const serviceError =
-      typeof parsedJson === "object" && parsedJson && "error" in parsedJson && parsedJson.error
-        ? String((parsedJson as { error: unknown }).error)
-        : rawText || `HTTP ${response.status}`;
-    throw new Error(`Forecast service error: ${serviceError}`);
+  const eventId =
+    typeof startPayload === "object" &&
+    startPayload &&
+    "event_id" in startPayload &&
+    typeof (startPayload as { event_id: unknown }).event_id === "string"
+      ? ((startPayload as { event_id: string }).event_id ?? "").trim()
+      : "";
+
+  if (!eventId) {
+    throw new Error("Forecast service did not return an event_id");
   }
 
-  const resultCandidate =
-    typeof parsedJson === "object" && parsedJson && "data" in parsedJson && Array.isArray((parsedJson as { data: unknown }).data)
-      ? (parsedJson as { data: unknown[] }).data[0]
-      : parsedJson;
+  const eventStreamUrl = `${invokeUrl}/${eventId}`;
 
-  if (!resultCandidate || typeof resultCandidate !== "object") {
-    throw new Error("Forecast service returned an empty response");
+  const eventResponse = await fetch(eventStreamUrl, {
+    method: "GET",
+    headers: {
+      ...(FORECAST_SERVICE_TOKEN ? { Authorization: `Bearer ${FORECAST_SERVICE_TOKEN}` } : {}),
+      Accept: "text/event-stream",
+    },
+  });
+
+  if (!eventResponse.ok || !eventResponse.body) {
+    const text = await eventResponse.text().catch(() => "");
+    throw new Error(`Forecast service stream error: ${text || eventResponse.statusText}`);
   }
 
-  return resultCandidate as PythonForecastResponse;
+  const reader = eventResponse.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let separatorIndex = buffer.indexOf("\n\n");
+    while (separatorIndex !== -1) {
+      const chunk = buffer.slice(0, separatorIndex);
+      buffer = buffer.slice(separatorIndex + 2);
+
+      let eventType = "message";
+      const dataParts: string[] = [];
+
+      for (const line of chunk.split("\n")) {
+        if (line.startsWith("event:")) {
+          eventType = line.slice(6).trim();
+        } else if (line.startsWith("data:")) {
+          dataParts.push(line.slice(5).trim());
+        }
+      }
+
+      const dataString = dataParts.join("\n");
+
+      if (eventType === "complete") {
+        if (!dataString) {
+          throw new Error("Forecast service returned an empty completion payload");
+        }
+
+        let parsedResult: unknown;
+        try {
+          parsedResult = JSON.parse(dataString);
+        } catch (error) {
+          throw new Error(
+            `Forecast service returned invalid completion JSON (${(error as Error).message}): ${dataString.slice(0, 200)}`
+          );
+        }
+
+        const resultCandidate = Array.isArray(parsedResult) ? parsedResult[0] : parsedResult;
+
+        if (!resultCandidate || typeof resultCandidate !== "object") {
+          throw new Error("Forecast service completion payload is empty");
+        }
+
+        return resultCandidate as PythonForecastResponse;
+      }
+
+      if (eventType === "error") {
+        throw new Error(dataString || "Forecast service reported an error");
+      }
+
+      separatorIndex = buffer.indexOf("\n\n");
+    }
+  }
+
+  throw new Error("Forecast service stream ended before returning a result");
 }
 
 async function persistForecast(
