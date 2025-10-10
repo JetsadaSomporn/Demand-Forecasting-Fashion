@@ -800,6 +800,7 @@ async function persistForecast(
         imageUrl: payload.imageUrl ?? null,
         warning: warning ?? result.warning ?? null,
         months: result.months ?? [],
+        yPred: result.y_pred ?? [],
       };
 
       const insertedForecast = await supabase
@@ -841,6 +842,7 @@ async function persistForecast(
         imageUrl: payload.imageUrl ?? null,
         warning: warning ?? result.warning ?? null,
         months: result.months ?? [],
+        yPred: result.y_pred ?? [],
       },
       y_true: result.y_true ?? null,
       y_pred: result.y_pred ?? [],

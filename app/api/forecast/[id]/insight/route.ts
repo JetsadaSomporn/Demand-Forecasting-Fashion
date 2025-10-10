@@ -19,6 +19,8 @@ type ForecastRecord = {
       sku?: string | null;
       category?: string | null;
     };
+    months?: unknown;
+    yPred?: unknown;
   };
   summary?: string | null;
   summary_language?: string | null;
@@ -146,14 +148,28 @@ function buildSummaryPrompt(record: LoadedForecast, language: "en" | "th") {
     return [];
   };
 
-  const months = normalizeMonths(record.months);
-  const predictions = normalizeNumbers(record.y_pred);
+  let months = normalizeMonths(record.months);
+  if (!months.length) {
+    months = normalizeMonths(record.params?.months ?? []);
+  }
+
+  let predictions = normalizeNumbers(record.y_pred);
+  if (!predictions.length) {
+    predictions = normalizeNumbers(record.params?.yPred ?? []);
+  }
 
   const pairs = months.map((month, index) => {
     const rawValue = predictions[index];
     const value = Number.isFinite(rawValue) ? rawValue : 0;
     return { month, value };
   });
+
+  if (!pairs.length) {
+    console.warn("[Insight] No forecast pairs found", {
+      months,
+      predictions,
+    });
+  }
 
   const total = pairs.reduce((sum, pair) => sum + pair.value, 0);
   const average = pairs.length ? total / pairs.length : 0;
