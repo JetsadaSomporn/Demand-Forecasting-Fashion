@@ -1005,11 +1005,16 @@ export async function POST(request: Request) {
       .trim();
 
     // Remove metrics field if present (we don't use it anymore)
-    const { metrics: _unusedMetrics, ...resultWithoutMetrics } = pythonResult;
-    void _unusedMetrics;
+    const baseResult =
+      "metrics" in pythonResult
+        ? (({ metrics: _unusedMetrics, ...rest }) => {
+            void _unusedMetrics;
+            return rest;
+          })(pythonResult as PythonForecastResponse)
+        : pythonResult;
 
     const resultPayload = {
-      ...resultWithoutMetrics,
+      ...(baseResult as ForecastResponse),
       model: pythonPayload.model,
       warning: warningMessages || undefined,
     };
