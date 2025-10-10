@@ -14,6 +14,9 @@ import {
 } from "@/lib/supabase";
 import { callLlama } from "@/lib/llm";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 type SupportedLanguage = "en" | "th";
 
 const CSV_NOTE_MESSAGES: Record<
