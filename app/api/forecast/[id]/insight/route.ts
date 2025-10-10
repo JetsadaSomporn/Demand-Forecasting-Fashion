@@ -90,12 +90,11 @@ async function loadForecast(id: string): Promise<LoadedForecast | null> {
 }
 
 function buildSummaryPrompt(record: LoadedForecast, language: "en" | "th") {
-  const pairs = record.months.map((month, index) => ({
-    month,
-    value: Number.isFinite(record.y_pred[index])
-      ? Number(record.y_pred[index])
-      : 0,
-  }));
+  const pairs = record.months.map((month, index) => {
+    const rawValue = Number((record.y_pred ?? [])[index]);
+    const value = Number.isFinite(rawValue) ? rawValue : 0;
+    return { month, value };
+  });
 
   const total = pairs.reduce((sum, pair) => sum + pair.value, 0);
   const average = pairs.length ? total / pairs.length : 0;
