@@ -17,6 +17,10 @@ import { callLlama } from "@/lib/llm";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+const extendedForecastRequestSchema = forecastRequestSchema.extend({
+  externalResult: forecastResponseSchema.optional(),
+});
+
 type SupportedLanguage = "en" | "th";
 
 const CSV_NOTE_MESSAGES: Record<
@@ -862,7 +866,9 @@ export async function POST(request: Request) {
     console.log("[Forecast API] Received request");
     const raw = await request.json();
     console.log("[Forecast API] Payload:", JSON.stringify(raw, null, 2));
-    const parsed = forecastRequestSchema.parse(raw);
+    const extendedParsed = extendedForecastRequestSchema.parse(raw);
+    const { externalResult, ...parsedWithoutExternal } = extendedParsed;
+    const parsed = parsedWithoutExternal as ForecastRequest;
     const requestLanguage: SupportedLanguage = parsed.language === "th" ? "th" : "en";
     const productWithThaiNormalization = translateThaiProduct(parsed.product);
 
@@ -982,7 +988,10 @@ export async function POST(request: Request) {
       salesCsvContent: salesCsvContent,
     };
 
-    const pythonResult = await runRemoteInference(pythonPayload);
+    const pythonResult =
+      externalResult != null
+        ? externalResult
+        : await runRemoteInference(pythonPayload);
 
     if (pythonResult.error && !pythonResult.y_pred) {
       return NextResponse.json(pythonResult, { status: 400 });

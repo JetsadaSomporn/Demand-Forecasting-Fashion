@@ -289,14 +289,40 @@ const {
         language,
       };
 
-      let forecast: ForecastResponse;
+      let finalForecast: ForecastResponse | null = null;
+      let finalStatusMessage: string | null = null;
 
       if (FORECAST_SPACE_BASE) {
         // NOTE: เรียกไปยัง Hugging Face Space โดยตรงเพื่อเลี่ยง server timeout
         // ถ้าจะกลับมาใช้ API route ให้ลบ env นี้แล้ว fallback ด้านล่างจะทำงานทันที
-        forecast = await fetchForecastFromSpace(FORECAST_SPACE_BASE, payload);
-        // ตอนนี้ยังไม่ persist ลง Supabase (เพราะต้องผ่าน service role)
-        // ถ้าต้องการบันทึก ให้เพิ่มขั้นตอนเรียก API ภายในหลังได้ผลลัพธ์
+        const spaceForecast = await fetchForecastFromSpace(
+          FORECAST_SPACE_BASE,
+          payload
+        );
+
+        try {
+          const persistResponse = await fetch("/api/forecast", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...payload,
+              externalResult: spaceForecast,
+            }),
+          });
+
+          if (!persistResponse.ok) {
+            const errorText = await persistResponse.text();
+            throw new Error(errorText || t("forecastForm.errors.saveFailed"));
+          }
+
+          const persistedJson = await persistResponse.json();
+          finalForecast = forecastResponseSchema.parse(persistedJson);
+          finalStatusMessage = t("forecastForm.status.forecastSaved");
+        } catch (persistError) {
+          console.error("[ForecastForm] Persist failed:", persistError);
+          finalForecast = spaceForecast;
+          setErrorMessage(t("forecastForm.errors.saveFailed"));
+        }
       } else {
         const response = await fetch("/api/forecast", {
           method: "POST",
@@ -310,11 +336,16 @@ const {
         }
 
         const json = await response.json();
-        forecast = forecastResponseSchema.parse(json);
+        finalForecast = forecastResponseSchema.parse(json);
+        finalStatusMessage = t("forecastForm.status.forecastSaved");
       }
 
-      setForecastResult(forecast);
-      setStatusMessage(t("forecastForm.status.forecastSaved"));
+      if (!finalForecast) {
+        throw new Error(t("forecastForm.errors.forecastFailed"));
+      }
+
+      setForecastResult(finalForecast);
+      setStatusMessage(finalStatusMessage);
     } catch (error) {
       console.error(error);
       setErrorMessage(
