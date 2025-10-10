@@ -20,8 +20,8 @@ const config: Config = {
         "accent-alt": "var(--accent-alt)",
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
-        mono: ["var(--font-geist-mono)", "monospace"],
+        sans: ["var(--font-montserrat)", "Montserrat", "system-ui", "sans-serif"],
+        display: ["var(--font-montserrat-display)", "Montserrat", "system-ui", "sans-serif"],
       },
       borderRadius: {
         "xl": "1.25rem",

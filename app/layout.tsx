@@ -1,24 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import Providers from "./providers";
 import { getServerLanguage } from "@/lib/i18n/server";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const montserratDisplay = Montserrat({
+  variable: "--font-montserrat-display",
   subsets: ["latin"],
-  display: "swap",
-});
-
-const playfairDisplay = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
+  weight: ["700", "800", "900"],
   display: "swap",
 });
 
@@ -36,7 +32,7 @@ export default async function RootLayout({
 
   return (
     <html lang={language}>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} antialiased`}>
+      <body className={`${montserrat.variable} ${montserratDisplay.variable} antialiased`}>
         <Providers initialLanguage={language}>{children}</Providers>
       </body>
     </html>

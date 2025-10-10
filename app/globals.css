@@ -21,8 +21,8 @@
   --color-foreground-muted: var(--foreground-muted);
   --color-accent: var(--accent);
   --color-accent-muted: var(--accent-muted);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-montserrat);
+  --font-display: var(--font-montserrat-display);
 }
 
 ::selection {
@@ -38,7 +38,8 @@ html,
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-montserrat), "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
   min-height: 100%;
 }
 
@@ -49,9 +50,9 @@ h4,
 h5,
 h6,
 .font-display {
-  font-family: var(--font-playfair), "Times New Roman", serif;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  font-family: var(--font-montserrat-display), "Montserrat", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 a {

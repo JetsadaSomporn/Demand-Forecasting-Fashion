@@ -5,7 +5,7 @@ export const dictionaries = {
       th: "Thai",
     },
     common: {
-      brand: "Demand Forecast",
+      brand: "Demo",
       signOut: "Sign out",
       accountFallback: "Account",
       optional: "Optional",
@@ -230,7 +230,7 @@ export const dictionaries = {
       th: "ไทย",
     },
     common: {
-      brand: "Demand Forecast",
+      brand: "Demo",
       signOut: "ออกจากระบบ",
       accountFallback: "บัญชีผู้ใช้",
       optional: "ไม่บังคับ",

@@ -70,33 +70,38 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center gap-6 px-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">{t("login.title")}</h1>
-        <p className="mt-2 text-sm text-foreground-muted">{t("login.description")}</p>
+    <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-8 px-6 bg-white">
+      <div className="space-y-3 text-center">
+        <h1 className="text-[clamp(1.5rem,3vw,2rem)] font-bold uppercase tracking-[0.2em] text-gray-900">
+          {t("login.title")}
+        </h1>
+        <p className="text-sm leading-relaxed text-gray-600">{t("login.description")}</p>
       </div>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6 rounded-[28px] border-2 border-gray-200 bg-white p-8 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-foreground">{t("login.emailLabel")}</span>
+          <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
+            {t("login.emailLabel")}
+          </span>
           <input
             type="email"
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder={t("login.emailPlaceholder")}
-            className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-accent"
+            className="rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-base text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
           />
         </label>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-full border border-accent bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
+          className="w-full rounded-full border-2 border-blue-600 bg-blue-600 px-8 py-3 text-sm font-bold uppercase tracking-[0.3em] shadow-[0_8px_16px_rgba(37,99,235,0.2)] transition hover:-translate-y-0.5 hover:bg-blue-700 hover:border-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+          style={{ color: '#FFFFFF' }}
         >
           {isSubmitting ? t("login.sendingLink") : t("login.sendLink")}
         </button>
       </form>
       {message ? (
-        <div className="rounded-xl border border-accent-muted bg-accent-muted/50 px-4 py-3 text-sm text-foreground">
+        <div className="rounded-2xl border-2 border-blue-200 bg-blue-50 px-5 py-4 text-sm text-blue-700">
           {message
             ? message.key
               ? t(message.key)
@@ -105,7 +110,7 @@ export default function LoginForm() {
         </div>
       ) : null}
       {error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+        <div className="rounded-2xl border-2 border-red-300 bg-red-50 px-5 py-4 text-sm text-red-700">
           {error
             ? error.key
               ? t(error.key)

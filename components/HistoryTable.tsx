@@ -214,10 +214,10 @@ export default function HistoryTable({ entries, initialId }: HistoryTableProps) 
     <div className="min-h-screen bg-white py-24 px-6">
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 space-y-2 text-left">
-          <h1 className="text-[13px] font-bold uppercase tracking-[0.35em] text-gray-900">
+          <h1 className="text-sm font-bold uppercase tracking-[0.35em] text-gray-900">
             {t("nav.history")}
           </h1>
-          <p className="max-w-xl text-xs leading-relaxed text-gray-600">
+          <p className="max-w-xl text-sm leading-relaxed text-gray-600">
             {t("history.table.description")}
           </p>
         </header>
