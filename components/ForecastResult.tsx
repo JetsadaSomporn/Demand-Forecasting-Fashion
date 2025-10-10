@@ -66,12 +66,14 @@ export default function ForecastResult({
   const displayedInsight = (insight ?? data.summary ?? "").trim();
 
   return (
-    <section className={clsx(cardClassName, "mt-10 flex flex-col gap-8 p-8")}> 
-      <header className="flex flex-col justify-between gap-2 md:flex-row md:items-center">
+    <section className="mt-10 flex flex-col gap-8 rounded-lg border-2 border-gray-200 bg-white p-8 shadow-sm"> 
+      <header className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h2 className={headingClassName}>{t("forecastResult.heading")}</h2>
-          <div className="flex items-center gap-2">
-            <p className={subtleTextClassName}>
+          <h2 className="text-sm font-bold uppercase tracking-[0.35em] text-gray-900">
+            {t("forecastResult.heading")}
+          </h2>
+          <div className="mt-2 flex items-center gap-2">
+            <p className="text-sm text-gray-600">
               {modelName}
               {separator}
               {horizonLabel}
@@ -79,10 +81,10 @@ export default function ForecastResult({
             {data.used_model !== undefined && (
               <span
                 className={clsx(
-                  "rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                  "rounded px-2 py-0.5 text-xs font-semibold",
                   data.used_model
-                    ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                    : "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-yellow-100 text-yellow-700"
                 )}
               >
                 {data.used_model
@@ -98,12 +100,13 @@ export default function ForecastResult({
             onClick={() => onSave?.()}
             disabled={!onSave || isSaving}
             className={clsx(
-              "rounded-full border px-5 py-2 text-sm font-medium transition",
+              "rounded border-2 px-5 py-2 text-sm font-bold uppercase tracking-wide transition",
               onSave
-                ? "border-accent bg-accent/10 text-foreground hover:bg-accent/20"
-                : "border-border/60 text-foreground-muted",
+                ? "border-gray-200 bg-white text-gray-900 hover:border-gray-300 hover:shadow-md"
+                : "border-gray-100 text-gray-400",
               isSaving && "cursor-wait opacity-70"
             )}
+            style={onSave && !isSaving ? { color: '#000000' } : undefined}
           >
             {isSaving
               ? t("forecastResult.buttons.saving")
@@ -112,7 +115,8 @@ export default function ForecastResult({
           {data.forecastId ? (
             <a
               href={`/api/export?forecastId=${data.forecastId}`}
-              className="rounded-full border border-border/70 px-5 py-2 text-sm font-medium text-foreground transition hover:border-accent hover:text-foreground"
+              className="rounded bg-blue-600 px-5 py-2 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-blue-700 hover:shadow-md"
+              style={{ color: '#FFFFFF' }}
             >
               {t("forecastResult.buttons.download")}
             </a>
@@ -122,12 +126,13 @@ export default function ForecastResult({
               onClick={() => onDownload?.()}
               disabled={!onDownload || isDownloading}
               className={clsx(
-                "rounded-full border px-5 py-2 text-sm font-medium transition",
+                "rounded px-5 py-2 text-sm font-bold uppercase tracking-wide transition",
                 onDownload
-                  ? "border-border/70 text-foreground hover:border-accent"
-                  : "border-border/40 text-foreground-muted",
+                  ? "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md"
+                  : "bg-gray-100 text-gray-400",
                 isDownloading && "cursor-wait opacity-70"
               )}
+              style={onDownload && !isDownloading ? { color: '#FFFFFF' } : undefined}
             >
               {isDownloading
                 ? t("forecastResult.buttons.preparing")
@@ -138,23 +143,23 @@ export default function ForecastResult({
       </header>
 
       {statusMessage ? (
-        <div className="rounded-2xl border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-foreground">
+        <div className="rounded-lg border-2 border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
           {statusMessage}
         </div>
       ) : null}
 
       {(displayedInsight || isInsightStreaming) && (
-        <div className="relative rounded-3xl border border-border/70 bg-surface py-5 pl-6 pr-5 shadow-[0_15px_40px_rgba(31,27,23,0.08)]">
-          <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.35em] text-foreground/60">
-            <Sparkles className="h-4 w-4 text-accent" />
+        <div className="relative rounded-lg border-2 border-gray-200 bg-white py-5 pl-6 pr-5 shadow-sm">
+          <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.35em] text-gray-600">
+            <Sparkles className="h-4 w-4 text-blue-600" />
             <span>{t("forecastResult.insightHeading")}</span>
           </div>
-          <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+          <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-gray-900">
             {displayedInsight || ""}
             {isInsightStreaming ? <span className="animate-pulse"> ▍</span> : null}
           </p>
           {!displayedInsight && isInsightStreaming ? (
-            <p className="mt-2 text-xs text-foreground-muted">
+            <p className="mt-2 text-xs text-gray-500">
               {t("forecastResult.insightLoading")}
             </p>
           ) : null}
@@ -163,14 +168,18 @@ export default function ForecastResult({
 
       <MinimalChart labels={labels} predicted={data.y_pred} actual={actualValues} />
 
-      <div className="overflow-hidden rounded-2xl border border-border/60">
-        <table className="w-full text-left text-sm text-foreground">
-          <thead className="bg-surface-hover/60 text-foreground-muted">
+      <div className="overflow-hidden rounded-lg border-2 border-gray-200">
+        <table className="w-full text-left text-sm text-gray-900">
+          <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 font-medium">{t("forecastResult.table.month")}</th>
-              <th className="px-4 py-3 font-medium">{t("forecastResult.table.forecastQty")}</th>
+              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.3em] text-gray-700">
+                {t("forecastResult.table.month")}
+              </th>
+              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.3em] text-gray-700">
+                {t("forecastResult.table.forecastQty")}
+              </th>
               {actualValues ? (
-                <th className="px-4 py-3 font-medium">
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.3em] text-gray-700">
                   {t("forecastResult.table.actualQty")}
                 </th>
               ) : null}
@@ -178,13 +187,13 @@ export default function ForecastResult({
           </thead>
           <tbody>
             {labels.map((label, idx) => (
-              <tr key={label} className="border-t border-border/50">
-                <td className="px-4 py-3 text-foreground-muted">{label}</td>
-                <td className="px-4 py-3 font-medium">
+              <tr key={label} className="border-t border-gray-200">
+                <td className="px-4 py-3 text-gray-600">{label}</td>
+                <td className="px-4 py-3 font-semibold text-gray-900">
                   {numberFormatter.format(Math.round(data.y_pred[idx]))}
                 </td>
                 {actualValues ? (
-                  <td className="px-4 py-3 text-foreground-muted">
+                  <td className="px-4 py-3 text-gray-600">
                     {actualValues[idx] != null
                       ? numberFormatter.format(Math.round(actualValues[idx]!))
                       : "—"}
