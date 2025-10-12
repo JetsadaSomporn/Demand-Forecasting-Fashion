@@ -128,6 +128,7 @@ create table if not exists public.settings (
   timezone text not null,
   currency text not null default 'THB',
   language text not null default 'en',
+  theme text not null default 'dark' check (theme in ('dark','light')),
   created_at timestamptz not null default public.utcnow(),
   updated_at timestamptz not null default public.utcnow()
 );

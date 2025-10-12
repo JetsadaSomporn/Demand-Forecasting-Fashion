@@ -213,6 +213,7 @@ export async function getSettingsDefaults() {
     timezone: "Asia/Bangkok",
     currency: "THB",
     language: resolveLanguage(undefined),
+    theme: "dark" as "dark" | "light",
   };
 
   if (isSupabaseConfigured("service")) {
@@ -220,7 +221,7 @@ export async function getSettingsDefaults() {
       const supabase = createSupabaseServiceClient();
       const { data, error } = await supabase
         .from("settings")
-        .select("brand_name, display_name, timezone, currency, language")
+        .select("brand_name, display_name, timezone, currency, language, theme")
         .limit(1)
         .single();
 
@@ -231,6 +232,7 @@ export async function getSettingsDefaults() {
           timezone: data.timezone ?? defaults.timezone,
           currency: data.currency ?? defaults.currency,
           language: resolveLanguage(data.language),
+          theme: (data.theme === "light" || data.theme === "dark" ? data.theme : defaults.theme),
         };
       }
     } catch (error) {
@@ -246,6 +248,10 @@ export async function getSettingsDefaults() {
       timezone: local.timezone ?? defaults.timezone,
       currency: local.currency ?? defaults.currency,
       language: resolveLanguage(local.language),
+      theme:
+        local.theme === "light" || local.theme === "dark"
+          ? local.theme
+          : defaults.theme,
     };
   }
 

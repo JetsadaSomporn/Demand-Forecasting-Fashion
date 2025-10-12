@@ -1,11 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { settingsSchema, type SettingsFormValues } from "@/lib/validators";
 import { useTranslation } from "@/lib/i18n/client";
 import type { Language } from "@/lib/i18n";
+import { useTheme } from "@/lib/theme/client";
 
 const timezones = [
   "UTC",
@@ -17,6 +18,19 @@ const timezones = [
 ];
 
 const currencies = ["THB", "USD", "EUR", "GBP", "JPY"];
+
+const themeOptions = [
+  {
+    value: "dark",
+    titleKey: "settings.theme.dark.title",
+    descriptionKey: "settings.theme.dark.description",
+  },
+  {
+    value: "light",
+    titleKey: "settings.theme.light.title",
+    descriptionKey: "settings.theme.light.description",
+  },
+] as const;
 
 type SettingsFormProps = {
   defaults: SettingsFormValues;
@@ -32,6 +46,7 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
@@ -39,6 +54,17 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
   });
 
   const [status, setStatus] = useState<string | null>(null);
+  const { setTheme: setClientTheme } = useTheme();
+  const selectedTheme = watch("theme");
+
+  useEffect(() => {
+    if (!selectedTheme) return;
+    setClientTheme(selectedTheme);
+  }, [selectedTheme, setClientTheme]);
+  const fieldClassName =
+    "w-full rounded-lg border border-white/20 bg-white/12 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-white focus:ring-2 focus:ring-white/30";
+  const labelClassName =
+    "text-[11px] font-bold uppercase tracking-[0.3em] text-white/70";
 
   const onSubmit = handleSubmit(async (values) => {
     setStatus(null);
@@ -63,32 +89,32 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
   });
 
   return (
-    <div className="min-h-screen bg-white py-24 px-6">
+    <div className="min-h-screen px-6 py-24 text-white">
       <div className="mx-auto max-w-3xl">
-        <header className="mb-8 space-y-2 text-left">
-          <h1 className="text-sm font-bold uppercase tracking-[0.35em] text-gray-900">
+        <header className="mb-10 space-y-3 text-left">
+          <h1 className="text-sm font-bold uppercase tracking-[0.35em] text-white/75">
             {t("settings.heading")}
           </h1>
-          <p className="max-w-xl text-sm leading-relaxed text-gray-600">
+          <p className="max-w-xl text-sm leading-relaxed text-white/60">
             {t("settings.description")}
           </p>
         </header>
 
         <form
           onSubmit={onSubmit}
-          className="space-y-8 rounded-[28px] border-2 border-gray-200 bg-white p-8 shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
+          className="space-y-8 rounded-xl border border-white/10 bg-white/12 p-8 shadow-[0_40px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl"
         >
 
           <section className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900" htmlFor="displayName">
+              <label className={labelClassName} htmlFor="displayName">
                 {t("settings.fields.displayName.label")}
               </label>
               <input
                 id="displayName"
                 type="text"
-                placeholder={t("settings.fields.displayName.placeholder")}
-                className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+                placeholder=""
+                className={fieldClassName}
                 {...register("displayName")}
               />
               {errors.displayName ? (
@@ -99,14 +125,14 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900" htmlFor="brandName">
+              <label className={labelClassName} htmlFor="brandName">
                 {t("settings.fields.brandName.label")}
               </label>
               <input
                 id="brandName"
                 type="text"
-                placeholder={t("settings.fields.brandName.placeholder")}
-                className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+                placeholder=""
+                className={fieldClassName}
                 {...register("brandName")}
               />
               {errors.brandName ? (
@@ -117,14 +143,60 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
             </div>
           </section>
 
+          <section className="space-y-4">
+            <label className={labelClassName}>{t("settings.fields.theme")}</label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {themeOptions.map((option) => {
+                const isSelected = selectedTheme === option.value;
+                return (
+                  <label
+                    key={option.value}
+                    className={`group flex cursor-pointer flex-col gap-3 rounded-xl border px-5 py-5 transition ${
+                      isSelected
+                        ? "border-accent bg-white/12 shadow-[0_24px_48px_rgba(0,0,0,0.35)]"
+                        : "border-white/12 bg-white/5 hover:border-white/30 hover:bg-white/10"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      value={option.value}
+                      className="sr-only"
+                      {...register("theme")}
+                    />
+                    <div
+                      className={`h-20 w-full rounded-lg ${
+                        option.value === "dark"
+                          ? "theme-card-preview-dark"
+                          : "theme-card-preview-light"
+                      }`}
+                    />
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.28em] text-white">
+                        {t(option.titleKey)}
+                      </p>
+                      <p className="text-sm leading-relaxed text-white/60">
+                        {t(option.descriptionKey)}
+                      </p>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+            {errors.theme ? (
+              <p className="text-xs text-red-500">
+                {translateError(errors.theme.message)}
+              </p>
+            ) : null}
+          </section>
+
           <section className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900" htmlFor="timezone">
+              <label className={labelClassName} htmlFor="timezone">
                 {t("settings.fields.timezone")}
               </label>
               <select
                 id="timezone"
-                className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+                className={fieldClassName}
                 {...register("timezone")}
               >
             {timezones.map((tz) => (
@@ -141,12 +213,12 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
         </div>
 
             <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900" htmlFor="currency">
+              <label className={labelClassName} htmlFor="currency">
                 {t("settings.fields.currency")}
               </label>
               <select
                 id="currency"
-                className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+                className={fieldClassName}
                 {...register("currency")}
               >
                 {currencies.map((currency) => (
@@ -163,12 +235,12 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
             </div>
 
             <div className="space-y-2 sm:col-span-2">
-              <label className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900" htmlFor="language">
+              <label className={labelClassName} htmlFor="language">
                 {t("settings.fields.language")}
               </label>
               <select
                 id="language"
-                className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+                className={fieldClassName}
                 {...register("language", {
                   onChange: (event) => {
                     const value = event.target.value;
@@ -191,13 +263,13 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-full border-2 border-blue-600 bg-blue-600 px-8 py-3 text-xs font-bold uppercase tracking-[0.3em] text-white shadow-[0_8px_16px_rgba(37,99,235,0.2)] transition hover:-translate-y-0.5 hover:bg-blue-700 hover:border-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+              className="rounded-full bg-transparent px-8 py-3 text-xs font-bold uppercase tracking-[0.3em] text-white shadow-[0_18px_32px_rgba(0,0,0,0.35)] transition hover:-translate-y-0.5 hover:text-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/15 supports-[backdrop-filter]:backdrop-blur-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
             >
               {isSubmitting
                 ? t("settings.buttons.saving")
                 : t("settings.buttons.save")}
             </button>
-            {status ? <span className="text-xs text-gray-600">{status}</span> : null}
+            {status ? <span className="text-xs text-white/60">{status}</span> : null}
           </div>
         </form>
       </div>

@@ -52,6 +52,7 @@ export async function POST(request: Request) {
               timezone: parsed.timezone,
               currency: parsed.currency,
               language: parsed.language,
+              theme: parsed.theme,
             })
             .eq("id", existingId);
         } else {
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
               timezone: parsed.timezone,
               currency: parsed.currency,
               language: parsed.language,
+              theme: parsed.theme,
             });
         }
         persistedToSupabase = true;

@@ -5,12 +5,10 @@ import type { ChangeEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
-import { clsx } from "clsx";
 import Image from "next/image";
 import ForecastResult from "./ForecastResult";
 import { type ForecastRequest, type ForecastResponse, forecastRequestSchema, forecastResponseSchema } from "@/lib/validators";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase";
-import { cardClassName, headingClassName, subtleTextClassName } from "@/lib/theme";
 import { z } from "zod";
 import { useTranslation } from "@/lib/i18n/client";
 import { fetchForecastFromSpace } from "@/lib/forecast-space-client";
@@ -464,34 +462,34 @@ const {
   }, [forecastResult?.forecastId, t]);
 
   const inputClassName =
-    "rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20";
+    "rounded-lg border border-white/20 bg-white/12 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-white focus:ring-2 focus:ring-white/30";
   const fileInputClassName =
-    "block w-full cursor-pointer rounded-xl border-2 border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 transition hover:border-gray-400 focus:border-blue-600";
+    "block w-full cursor-pointer rounded-lg border border-dashed border-white/20 px-4 py-3 text-sm text-white/70 transition hover:border-white/40 focus:border-white";
 
   return (
-    <div className="min-h-screen bg-white py-24 px-6">
+    <div className="min-h-screen px-6 py-24 text-white">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-8 space-y-2 text-left">
-          <h1 className="text-sm font-bold uppercase tracking-[0.35em] text-gray-900">
+        <header className="mb-10 space-y-3 text-left">
+          <h1 className="text-sm font-bold uppercase tracking-[0.35em] text-white/75">
             {t("forecastForm.heading")}
           </h1>
-          <p className="max-w-xl text-sm leading-relaxed text-gray-600">
+          <p className="max-w-xl text-sm leading-relaxed text-white/60">
             {t("forecastForm.description")}
           </p>
         </header>
 
         <div className="grid gap-8 lg:grid-cols-2">
           <aside className="space-y-4">
-            <div className="rounded-[28px] border-2 border-gray-200 bg-white p-6 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-              <div className="flex flex-col gap-2 text-sm">
-                <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
+            <div className="rounded-xl border border-white/10 bg-white/12 p-6 shadow-[0_40px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+              <div className="flex flex-col gap-2 text-sm text-white">
+                <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80">
                   {t("forecastForm.image.label")}
                 </span>
-                <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
+                <span className="text-[10px] uppercase tracking-[0.25em] text-white/50">
                   {t("forecastForm.image.optional")}
                 </span>
               </div>
-              <div className="relative mt-4 flex h-96 w-full items-center justify-center overflow-hidden rounded-[20px] border-2 border-dashed border-gray-300 bg-gray-50">
+              <div className="relative mt-4 flex h-96 w-full items-center justify-center overflow-hidden rounded-md border border-dashed border-white/25 bg-white/5">
                 {imagePreview ? (
                   <Image
                     src={imagePreview}
@@ -526,7 +524,7 @@ const {
                 />
               </div>
               {imageFile ? (
-                <p className="mt-3 text-[10px] uppercase tracking-[0.25em] text-gray-600" aria-live="polite">
+                <p className="mt-3 text-[10px] uppercase tracking-[0.25em] text-white/60" aria-live="polite">
                   {imageFile.name}
                 </p>
               ) : null}
@@ -534,7 +532,7 @@ const {
                 type="button"
                 onClick={handleExtract}
                 disabled={isExtracting}
-                className="mt-4 w-full rounded-full border-2 border-gray-900 bg-gray-900 px-6 py-3 text-xs font-bold uppercase tracking-[0.3em] text-white shadow-[0_8px_16px_rgba(0,0,0,0.15)] transition hover:-translate-y-0.5 hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+                className="mt-4 w-full rounded-full border border-white/20 bg-white/10 px-6 py-3 text-xs font-bold uppercase tracking-[0.3em] text-white transition hover:-translate-y-0.5 hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
               >
                 {isExtracting
                   ? t("forecastForm.image.extracting")
@@ -543,14 +541,14 @@ const {
             </div>
           </aside>
 
-          <form className="space-y-8" onSubmit={onSubmit}>
+          <form className="space-y-6" onSubmit={onSubmit}>
             <div className="grid gap-6 sm:grid-cols-2">
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80">
                     {t("forecastForm.fields.horizon")}
                   </span>
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-white/50">
                     {t("forecastForm.examples.horizon")}
                   </span>
                 </div>
@@ -570,10 +568,10 @@ const {
 
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80">
                     {t("forecastForm.fields.sku")}
                   </span>
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-white/50">
                     {t("forecastForm.examples.sku")}
                   </span>
                 </div>
@@ -586,10 +584,10 @@ const {
 
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80">
                     {t("forecastForm.fields.title")}
                   </span>
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-white/50">
                     {t("forecastForm.examples.title")}
                   </span>
                 </div>
@@ -602,10 +600,10 @@ const {
 
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80">
                     {t("forecastForm.fields.category")}
                   </span>
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-white/50">
                     {t("forecastForm.examples.category")}
                   </span>
                 </div>
@@ -623,10 +621,10 @@ const {
 
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80">
                     {t("forecastForm.fields.color")}
                   </span>
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-white/50">
                     {t("forecastForm.examples.color")}
                   </span>
                 </div>
@@ -644,10 +642,10 @@ const {
 
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80">
                     {t("forecastForm.fields.sizes")}
                   </span>
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-white/50">
                     {t("forecastForm.examples.sizes")}
                   </span>
                 </div>
@@ -665,10 +663,10 @@ const {
 
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80">
                     {t("forecastForm.fields.cost")}
                   </span>
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-white/50">
                     {t("forecastForm.examples.cost")}
                   </span>
                 </div>
@@ -688,10 +686,10 @@ const {
 
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80">
                     {t("forecastForm.fields.firstSaleMonth")}
                   </span>
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-white/50">
                     {t("forecastForm.examples.firstSaleMonth")}
                   </span>
                 </div>
@@ -703,12 +701,12 @@ const {
               </label>
             </div>
 
-            <div className="space-y-3 pt-4">
+            <div className="space-y-3 pt-2">
               <div className="flex items-baseline justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gray-900">
+                <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80">
                   {t("forecastForm.csv.label")}
                 </span>
-                <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500">
+                <span className="text-[10px] uppercase tracking-[0.25em] text-white/50">
                   {t("forecastForm.csv.optional")}
                 </span>
               </div>
@@ -719,23 +717,23 @@ const {
                 className={fileInputClassName}
               />
               {csvFile ? (
-                <p className="text-[10px] uppercase tracking-[0.25em] text-gray-600" aria-live="polite">
+                <p className="text-[10px] uppercase tracking-[0.25em] text-white/60" aria-live="polite">
                   {csvFile.name}
                 </p>
               ) : null}
             </div>
 
             {errorMessage ? (
-              <div className="rounded-2xl border-2 border-red-300 bg-red-50 px-5 py-4 text-sm text-red-700 shadow-sm">
+              <div className="rounded-lg border border-white/20 bg-rose-500/25 px-5 py-4 text-sm text-rose-200 shadow-[0_20px_40px_rgba(0,0,0,0.25)]">
                 {errorMessage}
               </div>
             ) : null}
 
-            <div className="flex flex-wrap items-center gap-4 pt-4">
+            <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="rounded-full border-2 border-blue-600 bg-blue-600 px-8 py-3 text-xs font-bold uppercase tracking-[0.3em] text-white shadow-[0_8px_16px_rgba(37,99,235,0.2)] transition hover:-translate-y-0.5 hover:bg-blue-700 hover:border-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+                className="rounded-full bg-transparent px-8 py-3 text-xs font-bold uppercase tracking-[0.3em] text-white shadow-[0_18px_32px_rgba(0,0,0,0.45)] transition hover:-translate-y-0.5 hover:text-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/15 supports-[backdrop-filter]:backdrop-blur-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
               >
                 {isSubmitting
                   ? t("forecastForm.buttons.running")
@@ -744,11 +742,12 @@ const {
               <button
                 type="button"
                 onClick={handleReset}
-                className="rounded-full border-2 border-gray-300 bg-white px-8 py-3 text-xs font-bold uppercase tracking-[0.3em] text-gray-900 transition hover:-translate-y-0.5 hover:border-gray-400"
+                className="rounded-full border border-white/20 bg-white/10 px-8 py-3 text-xs font-bold uppercase tracking-[0.3em] text-white transition hover:-translate-y-0.5 hover:bg-white/20"
               >
                 {t("forecastForm.buttons.reset")}
               </button>
             </div>
+
           </form>
         </div>
 

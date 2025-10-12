@@ -51,6 +51,7 @@ export const settingsSchema = z.object({
   timezone: z.string().min(1),
   currency: z.string().min(1).max(8),
   language: z.enum(["en", "th"]),
+  theme: z.enum(["dark", "light"]),
 });
 
 export type SettingsFormValues = z.infer<typeof settingsSchema>;

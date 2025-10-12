@@ -20,3 +20,31 @@ alter table public.settings
 
 alter table public.settings
   alter column language set not null;
+
+alter table public.settings
+  add column if not exists theme text;
+
+update public.settings
+set theme = coalesce(theme, 'dark')
+where theme is null;
+
+alter table public.settings
+  alter column theme set default 'dark';
+
+alter table public.settings
+  alter column theme set not null;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from information_schema.constraint_column_usage
+    where table_schema = 'public'
+      and table_name = 'settings'
+      and constraint_name = 'settings_theme_check'
+  ) then
+    alter table public.settings
+      add constraint settings_theme_check check (theme in ('dark','light'));
+  end if;
+end;
+$$;

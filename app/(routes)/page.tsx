@@ -4,10 +4,10 @@ import { ArrowRight } from "lucide-react";
 import InteractiveTitle from "@/components/InteractiveTitle";
 
 export default async function DashboardPage() {
-  const { t, language } = await getServerTranslator();
+  const { language } = await getServerTranslator();
 
   return (
-    <main className="relative flex min-h-screen w-full flex-col items-center justify-center px-6 text-white overflow-hidden">
+    <main className="fixed inset-0 flex h-screen w-screen flex-col items-center justify-center px-6 text-white overflow-hidden pt-50">
       {/* Background Video */}
       <video
         autoPlay
@@ -20,9 +20,10 @@ export default async function DashboardPage() {
       </video>
       
       {/* Overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.25)_0%,rgba(0,0,0,0.65)_60%,rgba(0,0,0,0.9)_100%)]" aria-hidden />
+      <div className="theme-linear-overlay absolute inset-0" aria-hidden />
+      <div className="theme-radial-overlay absolute inset-0" aria-hidden />
       
-      <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center gap-8 text-center mt-40">
+      <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center gap-8 text-center">
         <InteractiveTitle title="Forecast" />
         <p className="max-w-2xl text-lg leading-relaxed text-white/85">
           {language === "th"
@@ -31,7 +32,7 @@ export default async function DashboardPage() {
         </p>
         <Link
           href="/forecast"
-          className="inline-flex min-w-[190px] items-center justify-center rounded-full bg-white/95 px-10 py-4 text-xs font-semibold uppercase tracking-[0.32em] text-black transition duration-300 hover:-translate-y-0.5 hover:bg-white"
+          className="inline-flex min-w-[190px] items-center justify-center rounded-full bg-transparent px-10 py-4 text-xs font-semibold uppercase tracking-[0.32em] text-white/90 shadow-[0_18px_40px_rgba(0,0,0,0.45)] transition duration-300 hover:-translate-y-0.5 hover:text-white supports-[backdrop-filter]:bg-white/12 backdrop-blur supports-[backdrop-filter]:backdrop-blur-xl"
         >
           {language === "th" ? "เริ่มสร้าง Forecast" : "Create Forecast"}
         </Link>

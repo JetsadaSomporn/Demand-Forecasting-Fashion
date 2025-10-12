@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { clsx } from "clsx";
 import { Sparkles } from "lucide-react";
 import MinimalChart from "./MinimalChart";
-import { cardClassName, headingClassName, subtleTextClassName } from "@/lib/theme";
 import { useTranslation } from "@/lib/i18n/client";
 
 type ForecastResultData = {
@@ -66,14 +65,14 @@ export default function ForecastResult({
   const displayedInsight = (insight ?? data.summary ?? "").trim();
 
   return (
-    <section className="mt-10 flex flex-col gap-8 rounded-lg border-2 border-gray-200 bg-white p-8 shadow-sm"> 
+    <section className="mt-14 flex flex-col gap-8 rounded-[32px] border border-white/10 bg-white/10 p-8 text-white shadow-[0_40px_80px_rgba(0,0,0,0.35)] backdrop-blur-2xl">
       <header className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-[0.35em] text-gray-900">
+          <h2 className="text-sm font-bold uppercase tracking-[0.35em] text-white/75">
             {t("forecastResult.heading")}
           </h2>
           <div className="mt-2 flex items-center gap-2">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-white/60">
               {modelName}
               {separator}
               {horizonLabel}
@@ -81,10 +80,10 @@ export default function ForecastResult({
             {data.used_model !== undefined && (
               <span
                 className={clsx(
-                  "rounded px-2 py-0.5 text-xs font-semibold",
+                  "rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.25em]",
                   data.used_model
-                    ? "bg-green-100 text-green-700"
-                    : "bg-yellow-100 text-yellow-700"
+                    ? "bg-emerald-400/15 text-emerald-200"
+                    : "bg-amber-400/20 text-amber-200"
                 )}
               >
                 {data.used_model
@@ -100,13 +99,12 @@ export default function ForecastResult({
             onClick={() => onSave?.()}
             disabled={!onSave || isSaving}
             className={clsx(
-              "rounded border-2 px-5 py-2 text-sm font-bold uppercase tracking-wide transition",
+              "rounded-full border px-6 py-3 text-xs font-bold uppercase tracking-[0.28em] transition",
               onSave
-                ? "border-gray-200 bg-white text-gray-900 hover:border-gray-300 hover:shadow-md"
-                : "border-gray-100 text-gray-400",
-              isSaving && "cursor-wait opacity-70"
+                ? "border-white/20 bg-white/10 text-white hover:-translate-y-0.5 hover:bg-white/20"
+                : "border-white/10 text-white/30",
+              isSaving && "cursor-wait opacity-60"
             )}
-            style={onSave && !isSaving ? { color: '#000000' } : undefined}
           >
             {isSaving
               ? t("forecastResult.buttons.saving")
@@ -115,8 +113,7 @@ export default function ForecastResult({
           {data.forecastId ? (
             <a
               href={`/api/export?forecastId=${data.forecastId}`}
-              className="rounded bg-blue-600 px-5 py-2 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-blue-700 hover:shadow-md"
-              style={{ color: '#FFFFFF' }}
+              className="rounded-full border border-white bg-white px-6 py-3 text-xs font-bold uppercase tracking-[0.28em] text-black transition hover:-translate-y-0.5 hover:bg-white/90"
             >
               {t("forecastResult.buttons.download")}
             </a>
@@ -126,13 +123,12 @@ export default function ForecastResult({
               onClick={() => onDownload?.()}
               disabled={!onDownload || isDownloading}
               className={clsx(
-                "rounded px-5 py-2 text-sm font-bold uppercase tracking-wide transition",
+                "rounded-full px-6 py-3 text-xs font-bold uppercase tracking-[0.28em] transition",
                 onDownload
-                  ? "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md"
-                  : "bg-gray-100 text-gray-400",
-                isDownloading && "cursor-wait opacity-70"
+                  ? "border border-white bg-white text-black hover:-translate-y-0.5 hover:bg-white/90"
+                  : "border border-white/10 text-white/30",
+                isDownloading && "cursor-wait opacity-60"
               )}
-              style={onDownload && !isDownloading ? { color: '#FFFFFF' } : undefined}
             >
               {isDownloading
                 ? t("forecastResult.buttons.preparing")
@@ -143,23 +139,23 @@ export default function ForecastResult({
       </header>
 
       {statusMessage ? (
-        <div className="rounded-lg border-2 border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+        <div className="rounded-2xl border border-white/20 bg-white/10 px-5 py-4 text-sm text-white/80">
           {statusMessage}
         </div>
       ) : null}
 
       {(displayedInsight || isInsightStreaming) && (
-        <div className="relative rounded-lg border-2 border-gray-200 bg-white py-5 pl-6 pr-5 shadow-sm">
-          <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.35em] text-gray-600">
-            <Sparkles className="h-4 w-4 text-blue-600" />
+        <div className="relative rounded-[28px] border border-white/20 bg-white/10 py-6 pl-6 pr-5 shadow-[0_24px_48px_rgba(0,0,0,0.35)]">
+          <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.35em] text-white/60">
+            <Sparkles className="h-4 w-4 text-white" />
             <span>{t("forecastResult.insightHeading")}</span>
           </div>
-          <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-gray-900">
+          <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-white/80">
             {displayedInsight || ""}
             {isInsightStreaming ? <span className="animate-pulse"> ▍</span> : null}
           </p>
           {!displayedInsight && isInsightStreaming ? (
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-white/50">
               {t("forecastResult.insightLoading")}
             </p>
           ) : null}
@@ -168,18 +164,18 @@ export default function ForecastResult({
 
       <MinimalChart labels={labels} predicted={data.y_pred} actual={actualValues} />
 
-      <div className="overflow-hidden rounded-lg border-2 border-gray-200">
-        <table className="w-full text-left text-sm text-gray-900">
-          <thead className="bg-gray-50">
+      <div className="overflow-hidden rounded-[28px] border border-white/20 bg-white/5">
+        <table className="w-full text-left text-sm text-white/80">
+          <thead className="bg-white/10">
             <tr>
-              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.3em] text-gray-700">
+              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.3em] text-white/60">
                 {t("forecastResult.table.month")}
               </th>
-              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.3em] text-gray-700">
+              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.3em] text-white/60">
                 {t("forecastResult.table.forecastQty")}
               </th>
               {actualValues ? (
-                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.3em] text-gray-700">
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.3em] text-white/60">
                   {t("forecastResult.table.actualQty")}
                 </th>
               ) : null}
@@ -187,13 +183,13 @@ export default function ForecastResult({
           </thead>
           <tbody>
             {labels.map((label, idx) => (
-              <tr key={label} className="border-t border-gray-200">
-                <td className="px-4 py-3 text-gray-600">{label}</td>
-                <td className="px-4 py-3 font-semibold text-gray-900">
+              <tr key={label} className="border-t border-white/10">
+                <td className="px-4 py-3 text-white/60">{label}</td>
+                <td className="px-4 py-3 font-semibold text-white">
                   {numberFormatter.format(Math.round(data.y_pred[idx]))}
                 </td>
                 {actualValues ? (
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-white/60">
                     {actualValues[idx] != null
                       ? numberFormatter.format(Math.round(actualValues[idx]!))
                       : "—"}

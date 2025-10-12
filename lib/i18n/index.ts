@@ -5,7 +5,7 @@ export const dictionaries = {
       th: "Thai",
     },
     common: {
-      brand: "Demo",
+      brand: "Forecast",
       signOut: "Sign out",
       accountFallback: "Account",
       optional: "Optional",
@@ -205,6 +205,7 @@ export const dictionaries = {
         timezone: "Timezone",
         currency: "Currency",
         language: "Interface language",
+        theme: "Appearance",
       },
       buttons: {
         save: "Save changes",
@@ -215,6 +216,16 @@ export const dictionaries = {
       },
       errors: {
         saveFailed: "Failed to save settings",
+      },
+      theme: {
+        dark: {
+          title: "Dark mode",
+          description: "Deep glass surfaces with neon accents.",
+        },
+        light: {
+          title: "Light mode",
+          description: "Bright panels with soft, airy contrast.",
+        },
       },
     },
     validators: {
@@ -230,7 +241,7 @@ export const dictionaries = {
       th: "ไทย",
     },
     common: {
-      brand: "Demo",
+      brand: "Forecast",
       signOut: "ออกจากระบบ",
       accountFallback: "บัญชีผู้ใช้",
       optional: "ไม่บังคับ",
@@ -430,6 +441,7 @@ export const dictionaries = {
         timezone: "เขตเวลา",
         currency: "สกุลเงิน",
         language: "ภาษาอินเทอร์เฟซ",
+        theme: "ธีมการแสดงผล",
       },
       buttons: {
         save: "บันทึกการเปลี่ยนแปลง",
@@ -440,6 +452,16 @@ export const dictionaries = {
       },
       errors: {
         saveFailed: "บันทึกการตั้งค่าไม่สำเร็จ",
+      },
+      theme: {
+        dark: {
+          title: "โหมดมืด",
+          description: "พื้นผิวสไตล์กระจกเข้มพร้อมแสงนีออน",
+        },
+        light: {
+          title: "โหมดสว่าง",
+          description: "โทนสว่างสบายตาพร้อมแผงโปร่ง",
+        },
       },
     },
     validators: {

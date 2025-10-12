@@ -29,27 +29,27 @@ export default function AppShell({ children, user }: AppShellProps) {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-background via-surface/70 to-background text-foreground">
-      <header className="fixed inset-x-0 top-0 z-40 border-b border-border/30 bg-background/75 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-5">
+  <header className="fixed inset-x-0 top-0 z-40 bg-transparent">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3">
           <Link href="/" className="font-display text-lg tracking-[0.4em] uppercase text-foreground">
             {t("common.brand")}
           </Link>
           <div className="hidden flex-1 items-center justify-center md:flex">
             <Navigation items={navItems} />
           </div>
-          <div className="flex items-center gap-4 text-[11px] uppercase tracking-[0.35em] text-foreground/70">
-            <span className="hidden rounded-full border border-border/80 bg-surface/80 px-4 py-2 text-foreground md:inline-block">
+          <div className="flex items-center gap-4 text-foreground/70">
+            <span className="hidden rounded-full px-4 py-2 text-[13px] text-foreground/80 md:inline-block">
               {label}
             </span>
             <Link
               href="/logout"
-              className="text-foreground transition hover:text-accent"
+              className="text-[11px] uppercase tracking-[0.35em] text-foreground transition hover:text-accent"
             >
               {t("common.signOut")}
             </Link>
           </div>
         </div>
-        <div className="md:hidden border-t border-border/30 bg-background/80 px-6 pb-4 pt-3">
+  <div className="md:hidden bg-transparent px-6 pb-3 pt-2">
           <div className="overflow-x-auto">
             <Navigation items={navItems} />
           </div>
