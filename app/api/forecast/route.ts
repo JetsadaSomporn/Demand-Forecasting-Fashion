@@ -739,7 +739,6 @@ async function persistForecast(
 
       let productId: string | null = null;
 
-      // Check if product exists by SKU (if provided and not empty)
       if (normalizedProduct.sku && normalizedProduct.sku.trim()) {
         const existing = await supabase
           .from("products")
@@ -764,7 +763,6 @@ async function persistForecast(
         }
       }
 
-      // Always create product if not found (even without SKU)
       if (!productId) {
         const inserted = await supabase
           .from("products")
@@ -874,7 +872,6 @@ export async function POST(request: Request) {
     const requestLanguage: SupportedLanguage = parsed.language === "th" ? "th" : "en";
     const productWithThaiNormalization = translateThaiProduct(parsed.product);
 
-    // Validate and normalize with Llama 3.3 70B
     const validation = await validateWithLlama(productWithThaiNormalization);
     
     let productToUse = { ...productWithThaiNormalization };
@@ -888,12 +885,10 @@ export async function POST(request: Request) {
     } else {
       console.log("[Forecast] LLM failed, using fallback normalization");
       
-      // Fallback: Always uppercase category and color
       productToUse.category = (productToUse.category || "").toString().toUpperCase().trim();
       productToUse.color = (productToUse.color || "").toString().toUpperCase().trim();
       productToUse.sizes = (productToUse.sizes || "").toString().toUpperCase().trim();
       
-      // Map common category variations as fallback
       const categoryMap: Record<string, string> = {
         "CHILD": "CHILDREN",
         "KIDS": "CHILDREN",
@@ -1006,7 +1001,6 @@ export async function POST(request: Request) {
       .join(" · ")
       .trim();
 
-    // Remove metrics field if present (we don't use it anymore)
     const baseResult =
       "metrics" in pythonResult
         ? (({ metrics: _unusedMetrics, ...rest }) => {

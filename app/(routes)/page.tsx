@@ -8,7 +8,6 @@ export default async function DashboardPage() {
 
   return (
     <main className="fixed inset-0 flex h-screen w-screen flex-col items-center justify-center px-6 text-white overflow-hidden pt-50">
-      {/* Background Video */}
       <video
         autoPlay
         loop
@@ -18,8 +17,6 @@ export default async function DashboardPage() {
       >
         <source src="/media/hero.mp4" type="video/mp4" />
       </video>
-      
-      {/* Overlay */}
       <div className="theme-linear-overlay absolute inset-0" aria-hidden />
       <div className="theme-radial-overlay absolute inset-0" aria-hidden />
       

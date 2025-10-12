@@ -43,8 +43,6 @@ export default function LoginForm() {
         options: {
           emailRedirectTo: redirectUrl,
           shouldCreateUser: true,
-          // Disable PKCE to avoid code verifier issues
-          data: {},
         },
       });
 
@@ -71,7 +69,6 @@ export default function LoginForm() {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
-      {/* Header with brand */}
       <header className="fixed inset-x-0 top-0 z-40 bg-transparent px-6 py-5">
         <div className="mx-auto max-w-7xl">
           <div className="font-display text-lg tracking-[0.4em] uppercase text-foreground">

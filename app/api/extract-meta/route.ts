@@ -30,8 +30,6 @@ function heuristicFromFilename(source: string | null | undefined) {
   }
 
   const lower = source.toLowerCase();
-  
-  // Detect category from filename
   let category = "Feminine";
   if (lower.includes("men") || lower.includes("male") || lower.includes("masculine")) {
     category = "Masculine";
@@ -42,7 +40,6 @@ function heuristicFromFilename(source: string | null | undefined) {
     category = "Feminine";
   }
   
-  // Detect color from filename
   for (const [color, keywords] of Object.entries(COLOR_KEYWORDS)) {
     if (keywords.some((kw) => lower.includes(kw))) {
       return {
@@ -142,22 +139,18 @@ Respond ONLY with valid JSON in this exact format:
   const content = data.choices[0].message.content;
   
   try {
-    // Try to parse JSON response
     const parsed = JSON.parse(content);
     
-    // Normalize and validate values
     const category = (parsed.category || "Feminine").toString().trim();
     const color = (parsed.color || "BLACK").toString().toUpperCase().trim();
     const sizes = (parsed.sizes || "S|M|L|XL").toString().trim();
     const style = (parsed.style || "Fashion item").toString().trim();
     
-    // Validate category
     const validCategories = ["Feminine", "Masculine", "Children"];
     const normalizedCategory = validCategories.find(
       cat => cat.toLowerCase() === category.toLowerCase()
     ) || "Feminine";
     
-    // Validate color
     const validColors = ["BLACK", "WHITE", "BLUE", "RED", "GREEN", "PINK", "PURPLE", "BEIGE", "GRAY", "BROWN"];
     const normalizedColor = validColors.find(
       col => col === color || col.toLowerCase() === color.toLowerCase()
@@ -172,7 +165,6 @@ Respond ONLY with valid JSON in this exact format:
       raw_response: content
     };
   } catch {
-    // If not JSON, try to extract from text
     const categoryMatch = content.match(/category['":\s]*['"]?(\w+)['"]?/i);
     const colorMatch = content.match(/color['":\s]*['"]?(\w+)['"]?/i);
     const sizesMatch = content.match(/sizes?['":\s]*['"]?([^'"]+)['"]?/i);
@@ -193,7 +185,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const payload = imageExtractSchema.parse(body);
-    const hfToken = process.env.HF_TOKEN;    // If no HF token, fall back to heuristic
+    const hfToken = process.env.HF_TOKEN;
     if (!hfToken) {
       const heuristic = heuristicFromFilename(payload.imageUrl ?? null);
       return NextResponse.json({
@@ -207,7 +199,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // If no image URL, use heuristic
     if (!payload.imageUrl && !payload.imageBase64) {
       const heuristic = heuristicFromFilename(null);
       return NextResponse.json({
@@ -222,14 +213,12 @@ export async function POST(request: Request) {
     }
 
     try {
-      // Use imageUrl if available, otherwise try to convert base64 to a temporary URL
       const imageUrl = payload.imageUrl || payload.imageBase64;
       
       if (!imageUrl) {
         throw new Error("No image URL or base64 data provided");
       }
 
-      // Call Qwen API
       const result = await analyzeImageWithQwen(imageUrl);
 
       return NextResponse.json({
@@ -244,7 +233,6 @@ export async function POST(request: Request) {
     } catch (qwenError) {
       console.error("Qwen API error:", qwenError);
       
-      // Fall back to heuristic if Qwen fails
       const heuristic = heuristicFromFilename(payload.imageUrl ?? null);
       return NextResponse.json({
         category: heuristic.category,
@@ -260,7 +248,6 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[Extract API] Error:", error);
     
-    // If it's a Zod validation error, provide more details
     if (error && typeof error === 'object' && 'issues' in error) {
       const zodError = error as { issues: Array<{ path: string[]; message: string }> };
       return NextResponse.json(

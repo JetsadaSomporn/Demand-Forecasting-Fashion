@@ -35,8 +35,7 @@ async function fileToBase64(file: File) {
 const sampleEditorialImage =
   "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=720&q=80";
 
-// ตั้งค่า NEXT_PUBLIC_FORECAST_SERVICE_URL เพื่อให้ฟอร์มเรียก Hugging Face Space โดยตรง
-// (หลบ timeout ของ Vercel serverless). ถ้าไม่ได้ตั้ง จะ fallback ไปใช้ API route เดิม.
+// Use NEXT_PUBLIC_FORECAST_SERVICE_URL to hit the Hugging Face Space directly and dodge Vercel timeouts; fall back to the API route when unset.
 const FORECAST_SPACE_BASE = process.env.NEXT_PUBLIC_FORECAST_SERVICE_URL?.trim() || null;
 
 export default function ForecastForm() {
@@ -291,8 +290,7 @@ const {
       let finalStatusMessage: string | null = null;
 
       if (FORECAST_SPACE_BASE) {
-        // NOTE: เรียกไปยัง Hugging Face Space โดยตรงเพื่อเลี่ยง server timeout
-        // ถ้าจะกลับมาใช้ API route ให้ลบ env นี้แล้ว fallback ด้านล่างจะทำงานทันที
+        // Call Hugging Face directly when configured; otherwise let the API route handle persistence.
         const spaceForecast = await fetchForecastFromSpace(
           FORECAST_SPACE_BASE,
           payload

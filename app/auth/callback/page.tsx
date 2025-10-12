@@ -15,13 +15,11 @@ export default function AuthCallbackPage() {
     if (processedRef.current) return;
     processedRef.current = true;
 
-  const run = async () => {
+    const run = async () => {
       const supabase = getSupabaseBrowserClient();
 
-      // Log full URL for debugging
       console.log("[Callback] Full URL:", typeof window !== "undefined" ? window.location.href : "SSR");
 
-      // Access tokens are returned in the URL hash, which is only visible client-side.
       const hash = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
       const hashParams = new URLSearchParams(hash);
 
@@ -38,7 +36,6 @@ export default function AuthCallbackPage() {
 
       const missing = !accessToken && !refreshToken && !code && !tokenHash;
 
-      // Debug logging
       console.log("[Callback] URL params:", {
         code,
         tokenHash,
