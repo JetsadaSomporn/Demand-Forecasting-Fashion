@@ -61,13 +61,17 @@ export const dictionaries = {
       metadataDetail: "metadata + seasonality",
     },
     login: {
-      title: "Sign in",
+      title: "Welcome to Forecast",
       description:
         "Use your work email to receive a one-time login link. No passwords to remember.",
       emailLabel: "Email",
       emailPlaceholder: "you@company.com",
       sendLink: "Send magic link",
       sendingLink: "Sending link…",
+      google: {
+        continue: "Continue with Google",
+        redirect: "Redirecting to Google…",
+      },
       alerts: {
         checkEmail: "Check your inbox for a login link.",
         signedOut: "Signed out successfully.",
@@ -297,13 +301,17 @@ export const dictionaries = {
       metadataDetail: "ใช้ข้อมูลสินค้าและฤดูกาล",
     },
     login: {
-      title: "เข้าสู่ระบบ",
+      title: "ยินดีต้อนรับสู่ Forecast",
       description:
         "กรอกอีเมลองค์กรเพื่อรับลิงก์เข้าใช้งานแบบครั้งเดียว ไม่ต้องจำรหัสผ่าน",
       emailLabel: "อีเมล",
       emailPlaceholder: "you@company.com",
       sendLink: "ส่งลิงก์เข้าสู่ระบบ",
       sendingLink: "กำลังส่งลิงก์…",
+      google: {
+        continue: "เข้าสู่ระบบด้วย Google",
+        redirect: "กำลังนำคุณไปยัง Google…",
+      },
       alerts: {
         checkEmail: "กรุณาตรวจอีเมลเพื่อกดลิงก์เข้าสู่ระบบ",
         signedOut: "ออกจากระบบเรียบร้อยแล้ว",
