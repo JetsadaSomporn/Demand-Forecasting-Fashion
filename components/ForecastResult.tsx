@@ -126,7 +126,7 @@ export default function ForecastResult({
                 "rounded-full px-6 py-3 text-xs font-bold uppercase tracking-[0.28em] transition",
                 onDownload
                   ? "border border-white bg-white text-black hover:-translate-y-0.5 hover:bg-white/90"
-                  : "border border-white/10 text-white/30",
+                  : "border border-white/20 bg-white/5 text-white/50",
                 isDownloading && "cursor-wait opacity-60"
               )}
             >
