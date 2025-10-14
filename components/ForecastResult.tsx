@@ -113,7 +113,7 @@ export default function ForecastResult({
           {data.forecastId ? (
             <a
               href={`/api/export?forecastId=${data.forecastId}`}
-              className="rounded-full border border-white bg-white px-6 py-3 text-xs font-bold uppercase tracking-[0.28em] text-black transition hover:-translate-y-0.5 hover:bg-white/90"
+              className="rounded-full border border-white !bg-white px-6 py-3 text-xs font-bold uppercase tracking-[0.28em] !text-black transition hover:-translate-y-0.5 hover:!bg-white/90"
             >
               {t("forecastResult.buttons.download")}
             </a>
@@ -125,8 +125,8 @@ export default function ForecastResult({
               className={clsx(
                 "rounded-full px-6 py-3 text-xs font-bold uppercase tracking-[0.28em] transition",
                 onDownload
-                  ? "border border-white bg-white text-black hover:-translate-y-0.5 hover:bg-white/90"
-                  : "border border-white/20 bg-white/5 text-white/50",
+                  ? "border border-white !bg-white !text-black hover:-translate-y-0.5 hover:!bg-white/90"
+                  : "border border-white/20 !bg-white/5 !text-white/50",
                 isDownloading && "cursor-wait opacity-60"
               )}
             >
