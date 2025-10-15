@@ -23,7 +23,7 @@ const SUPABASE_IMAGE_BUCKET =
   process.env.SUPABASE_IMAGE_BUCKET || "product-images";
 const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1 hour window for Qwen to fetch the asset
 const DATA_URL_REGEX =
-  /^data:(?<mime>image\/[a-z0-9.+-]+);base64,(?<payload>[a-zA-Z0-9+/=]+)$/i;
+  /^data:(image\/[a-z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/i;
 
 function extensionFromMime(mime: string) {
   switch (mime) {
@@ -49,7 +49,7 @@ async function resolveImageForQwen(source: string) {
   }
 
   const match = DATA_URL_REGEX.exec(source);
-  if (!match?.groups?.mime || !match.groups.payload) {
+  if (!match?.[1] || !match?.[2]) {
     throw new Error("Invalid data URL provided for image analysis.");
   }
 
@@ -59,7 +59,8 @@ async function resolveImageForQwen(source: string) {
     );
   }
 
-  const { mime, payload } = match.groups;
+  const mime = match[1];
+  const payload = match[2];
   const extension = extensionFromMime(mime);
   if (!extension) {
     throw new Error(`Unsupported image MIME type: ${mime}`);
