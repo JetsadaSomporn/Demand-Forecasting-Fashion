@@ -42,14 +42,14 @@
   --google-btn-text: var(--text-90);
   --hero-overlay-linear: linear-gradient(
     to bottom,
-    rgba(4, 4, 10, 0.35),
-    rgba(4, 4, 10, 0.4)
+    rgba(4, 4, 10, 0.12),
+    rgba(4, 4, 10, 0.18)
   );
   --hero-overlay-radial: radial-gradient(
     circle at center,
-    rgba(124, 140, 255, 0.08) 0%,
-    rgba(4, 4, 10, 0.4) 55%,
-    rgba(4, 4, 10, 0.65) 100%
+    rgba(124, 140, 255, 0.05) 0%,
+    rgba(4, 4, 10, 0.16) 55%,
+    rgba(4, 4, 10, 0.22) 100%
   );
   --theme-preview-dark: linear-gradient(
     135deg,
@@ -105,14 +105,14 @@
   --google-btn-text: #1f2937;
   --hero-overlay-linear: linear-gradient(
     to bottom,
-    rgba(244, 247, 251, 0.9),
-    rgba(244, 247, 251, 0.95)
+    rgba(244, 247, 251, 0.18),
+    rgba(244, 247, 251, 0.24)
   );
   --hero-overlay-radial: radial-gradient(
     circle at center,
-    rgba(124, 140, 255, 0.1) 0%,
-    rgba(255, 255, 255, 0.76) 55%,
-    rgba(244, 247, 251, 0.95) 100%
+    rgba(124, 140, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.18) 55%,
+    rgba(244, 247, 251, 0.25) 100%
   );
   --theme-preview-dark: linear-gradient(
     135deg,
