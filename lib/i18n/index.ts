@@ -106,7 +106,7 @@ export const dictionaries = {
       },
       warnings: {
         colorAiUncertain:
-          "AI filled this color automatically. Please double-check before saving.",
+          "AI filled this color automatically. Please double-check before Forecasting.",
       },
       errors: {
         forecastFailed: "Failed to run forecast",
