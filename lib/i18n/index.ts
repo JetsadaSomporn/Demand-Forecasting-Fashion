@@ -104,6 +104,10 @@ export const dictionaries = {
         metadataExtracted: "Metadata extracted from image.",
         forecastExportSaved: "Forecast export saved.",
       },
+      warnings: {
+        colorAiUncertain:
+          "AI filled this color automatically. Please double-check before saving.",
+      },
       errors: {
         forecastFailed: "Failed to run forecast",
         unexpected: "Unexpected error",
@@ -343,6 +347,10 @@ export const dictionaries = {
         forecastSaved: "บันทึกผลคาดการณ์ไว้ในประวัติและพร้อมดาวน์โหลดแล้ว",
         metadataExtracted: "ดึงข้อมูลจากรูปภาพเรียบร้อย",
         forecastExportSaved: "บันทึกไฟล์ผลคาดการณ์แล้ว",
+      },
+      warnings: {
+        colorAiUncertain:
+          "ระบบ AI กรอกค่าสีให้อัตโนมัติ อาจคลาดเคลื่อน กรุณาตรวจสอบอีกครั้ง",
       },
       errors: {
         forecastFailed: "รันการคาดการณ์ไม่สำเร็จ",

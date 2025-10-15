@@ -5,17 +5,38 @@ import { imageExtractSchema } from "@/lib/validators";
 import { createSupabaseServiceClient, isSupabaseConfigured } from "@/lib/supabase";
 
 const COLOR_KEYWORDS: Record<string, string[]> = {
-  Black: ["black", "noir", "ebony", "ink"],
-  White: ["white", "ivory", "cream"],
-  Beige: ["beige", "sand", "khaki"],
-  Blue: ["blue", "navy", "cobalt", "azure"],
-  Red: ["red", "crimson", "scarlet", "ruby"],
-  Green: ["green", "emerald", "sage", "olive"],
-  Pink: ["pink", "blush", "rose"],
-  Purple: ["purple", "violet", "lavender"],
-  Brown: ["brown", "cocoa", "mocha"],
-  Gray: ["gray", "grey", "slate", "ash"],
+  Black: ["black", "noir", "ebony", "ink", "jet"],
+  White: ["white", "ivory", "cream", "snow", "pearl"],
+  Beige: ["beige", "sand", "khaki", "taupe", "tan"],
+  Blue: ["blue", "navy", "cobalt", "azure", "teal", "denim"],
+  Red: ["red", "crimson", "scarlet", "ruby", "burgundy"],
+  Green: ["green", "emerald", "sage", "olive", "mint"],
+  Pink: ["pink", "blush", "rose", "magenta", "fuchsia"],
+  Purple: ["purple", "violet", "lavender", "lilac"],
+  Brown: ["brown", "cocoa", "mocha", "chocolate", "espresso"],
+  Gray: ["gray", "grey", "slate", "ash", "charcoal", "silver"],
+  Yellow: ["yellow", "gold", "mustard", "amber", "ochre", "ocher"],
+  Orange: ["orange", "rust", "terracotta", "coral", "apricot"],
 };
+
+const COLOR_ALIASES: Record<string, string> = Object.fromEntries(
+  Object.entries(COLOR_KEYWORDS).flatMap(([canonical, variants]) => [
+    [canonical.toUpperCase(), canonical.toUpperCase()],
+    ...variants.map((variant) => [variant.toUpperCase(), canonical.toUpperCase()]),
+  ])
+);
+
+COLOR_ALIASES.GRAY = "GRAY";
+COLOR_ALIASES.GREY = "GRAY";
+COLOR_ALIASES.SILVER = "GRAY";
+COLOR_ALIASES.CREAM = "BEIGE";
+COLOR_ALIASES.CARAMEL = "BROWN";
+COLOR_ALIASES.TAN = "BEIGE";
+COLOR_ALIASES.KHAKI = "BEIGE";
+COLOR_ALIASES.NEUTRAL = "BEIGE";
+COLOR_ALIASES.MULTICOLOR = "MULTICOLOR";
+
+const DEFAULT_COLOR = "BLACK";
 
 const QWEN_API_URL = "https://router.huggingface.co/v1/chat/completions";
 const QWEN_MODEL = "Qwen/Qwen2.5-VL-7B-Instruct:hyperbolic";
@@ -41,6 +62,45 @@ function extensionFromMime(mime: string) {
     default:
       return null;
   }
+}
+
+function normalizeColor(input: string | null | undefined) {
+  if (!input) return DEFAULT_COLOR;
+  const cleaned = input.trim().toUpperCase();
+  if (!cleaned) return DEFAULT_COLOR;
+
+  if (COLOR_ALIASES[cleaned]) {
+    return COLOR_ALIASES[cleaned];
+  }
+
+  const tokens = cleaned.split(/[\s/-]+/);
+  for (const token of tokens) {
+    if (COLOR_ALIASES[token]) {
+      return COLOR_ALIASES[token];
+    }
+  }
+
+  // Allow hex-like colors (e.g., "#fefefe") to map to closest known shade
+  if (/^#?[0-9A-F]{6}$/.test(cleaned)) {
+    const hex = cleaned.startsWith("#") ? cleaned.slice(1) : cleaned;
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const lightness = (max + min) / 2;
+
+    if (max === min) {
+      return lightness > 200 ? "WHITE" : lightness < 55 ? "BLACK" : "GRAY";
+    }
+
+    if (max === r && g >= b) return "ORANGE";
+    if (max === r && g < b) return "RED";
+    if (max === g) return lightness > 80 ? "YELLOW" : "GREEN";
+    return "BLUE";
+  }
+
+  return DEFAULT_COLOR;
 }
 
 async function resolveImageForQwen(source: string) {
@@ -105,7 +165,7 @@ function heuristicFromFilename(source: string | null | undefined) {
   if (!source) {
     return {
       category: "Feminine",
-      color: "BLACK",
+      color: DEFAULT_COLOR,
       sizes: "S|M|L|XL",
       style: "Minimal silhouette",
       confidence: 0.2,
@@ -139,7 +199,7 @@ function heuristicFromFilename(source: string | null | undefined) {
 
   return {
     category,
-    color: "BLACK",
+    color: DEFAULT_COLOR,
     sizes: "S|M|L|XL",
     style: "Contemporary minimal",
     confidence: 0.25,
@@ -226,7 +286,7 @@ Respond ONLY with valid JSON in this exact format:
     const parsed = JSON.parse(content);
     
     const category = (parsed.category || "Feminine").toString().trim();
-    const color = (parsed.color || "BLACK").toString().toUpperCase().trim();
+    const color = normalizeColor(parsed.color?.toString());
     const sizes = (parsed.sizes || "S|M|L|XL").toString().trim();
     const style = (parsed.style || "Fashion item").toString().trim();
     
@@ -235,14 +295,9 @@ Respond ONLY with valid JSON in this exact format:
       cat => cat.toLowerCase() === category.toLowerCase()
     ) || "Feminine";
     
-    const validColors = ["BLACK", "WHITE", "BLUE", "RED", "GREEN", "PINK", "PURPLE", "BEIGE", "GRAY", "BROWN"];
-    const normalizedColor = validColors.find(
-      col => col === color || col.toLowerCase() === color.toLowerCase()
-    ) || "BLACK";
-    
     return {
       category: normalizedCategory,
-      color: normalizedColor,
+      color,
       sizes: sizes,
       style: style,
       confidence: 0.85,
@@ -256,7 +311,7 @@ Respond ONLY with valid JSON in this exact format:
     
     return {
       category: categoryMatch?.[1] || "Feminine",
-      color: (colorMatch?.[1] || "BLACK").toUpperCase(),
+      color: normalizeColor(colorMatch?.[1]?.toString()),
       sizes: sizesMatch?.[1] || "S|M|L|XL",
       style: styleMatch?.[1] || content.slice(0, 50),
       confidence: 0.6,

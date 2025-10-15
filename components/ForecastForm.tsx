@@ -64,6 +64,7 @@ export default function ForecastForm() {
   const [saveState, setSaveState] = useState<"idle" | "saving">("idle");
   const [insight, setInsight] = useState<string>("");
   const [isInsightStreaming, setIsInsightStreaming] = useState(false);
+  const [colorWarning, setColorWarning] = useState<string | null>(null);
 
   useEffect(() => {
     if (!forecastResult?.forecastId) {
@@ -249,6 +250,7 @@ const {
     setImageUpload(null);
     if (imagePreview) URL.revokeObjectURL(imagePreview);
     setImagePreview(file ? URL.createObjectURL(file) : null);
+    setColorWarning(null);
   }, [imagePreview]);
 
   const onSubmit = handleSubmit(async (values) => {
@@ -361,6 +363,7 @@ const {
     }
     setIsExtracting(true);
     setErrorMessage(null);
+    setColorWarning(null);
 
     try {
       const image = await ensureImageUpload();
@@ -391,6 +394,7 @@ const {
       }
       if (json?.color) {
         setValue("product.color", json.color, { shouldValidate: true });
+        setColorWarning(t("forecastForm.warnings.colorAiUncertain"));
       }
       if (json?.sizes) {
         setValue("product.sizes", json.sizes, { shouldValidate: true });
@@ -406,6 +410,7 @@ const {
           ? error.message
           : t("forecastForm.errors.extractionFailed")
       );
+      setColorWarning(null);
     } finally {
       setIsExtracting(false);
     }
@@ -426,6 +431,7 @@ const {
     setErrorMessage(null);
     setInsight("");
     setIsInsightStreaming(false);
+    setColorWarning(null);
   }, [imagePreview, reset]);
 
   const handleSave = useCallback(async () => {
@@ -629,8 +635,15 @@ const {
                 <input
                   type="text"
                   className={inputClassName}
-                  {...register("product.color")}
+                  {...register("product.color", {
+                    onChange: () => setColorWarning(null),
+                  })}
                 />
+                {colorWarning ? (
+                  <span className="text-xs text-amber-300">
+                    {colorWarning}
+                  </span>
+                ) : null}
                 {errors.product?.color ? (
                   <span className="text-xs text-red-500">
                     {renderError(errors.product.color.message)}
