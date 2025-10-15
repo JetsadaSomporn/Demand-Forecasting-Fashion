@@ -40,7 +40,7 @@ export async function GET(request: Request) {
   const redirectPath = sanitizeRedirect(requestUrl.searchParams.get("redirect"));
   const redirectUrl = new URL(redirectPath, requestUrl.origin);
   const response = NextResponse.redirect(redirectUrl);
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
