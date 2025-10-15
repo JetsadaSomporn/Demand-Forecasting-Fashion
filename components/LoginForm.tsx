@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { useTranslation } from "@/lib/i18n/client";
@@ -27,6 +27,43 @@ export default function LoginForm() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [message, setMessage] = useState<FlashMessage | null>(initialMessage);
   const [error, setError] = useState<FlashMessage | null>(initialError);
+  const [activeLegal, setActiveLegal] = useState<"terms" | "privacy" | null>(null);
+
+  const termsSections = useMemo(
+    () => [
+      {
+        heading: t("login.legal.terms.sections.usageTitle"),
+        body: t("login.legal.terms.sections.usageBody"),
+      },
+      {
+        heading: t("login.legal.terms.sections.dataTitle"),
+        body: t("login.legal.terms.sections.dataBody"),
+      },
+      {
+        heading: t("login.legal.terms.sections.reliabilityTitle"),
+        body: t("login.legal.terms.sections.reliabilityBody"),
+      },
+    ],
+    [t]
+  );
+
+  const privacySections = useMemo(
+    () => [
+      {
+        heading: t("login.legal.privacy.sections.accountTitle"),
+        body: t("login.legal.privacy.sections.accountBody"),
+      },
+      {
+        heading: t("login.legal.privacy.sections.storageTitle"),
+        body: t("login.legal.privacy.sections.storageBody"),
+      },
+      {
+        heading: t("login.legal.privacy.sections.analyticsTitle"),
+        body: t("login.legal.privacy.sections.analyticsBody"),
+      },
+    ],
+    [t]
+  );
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -173,6 +210,111 @@ export default function LoginForm() {
               {error.key ? t(error.key) : error.raw}
             </div>
           ) : null}
+
+          <p className="pt-4 text-center text-[11px] text-white/55">
+            {t("login.legal.notice")}{" "}
+            <button
+              type="button"
+              className="font-medium text-white underline decoration-white/40 underline-offset-2 transition hover:text-white/90 hover:decoration-white"
+              onClick={() => setActiveLegal("terms")}
+            >
+              {t("login.legal.termsLink")}
+            </button>{" "}
+            {t("login.legal.and")}{" "}
+            <button
+              type="button"
+              className="font-medium text-white underline decoration-white/40 underline-offset-2 transition hover:text-white/90 hover:decoration-white"
+              onClick={() => setActiveLegal("privacy")}
+            >
+              {t("login.legal.privacyLink")}
+            </button>
+          </p>
+        </div>
+      </div>
+
+      {activeLegal ? (
+        <LegalModal
+          title={
+            activeLegal === "terms"
+              ? t("login.legal.terms.title")
+              : t("login.legal.privacy.title")
+          }
+          intro={
+            activeLegal === "terms"
+              ? t("login.legal.terms.intro")
+              : t("login.legal.privacy.intro")
+          }
+          sections={activeLegal === "terms" ? termsSections : privacySections}
+          closeLabel={
+            activeLegal === "terms"
+              ? t("login.legal.terms.close")
+              : t("login.legal.privacy.close")
+          }
+          onClose={() => setActiveLegal(null)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+type LegalModalProps = {
+  title: string;
+  intro: string;
+  sections: Array<{ heading: string; body: string }>;
+  closeLabel: string;
+  onClose: () => void;
+};
+
+function LegalModal({ title, intro, sections, closeLabel, onClose }: LegalModalProps) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6 backdrop-blur"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-white/15 bg-white/10 p-6 text-left text-white shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold tracking-wide text-white">
+              {title}
+            </h2>
+            <p className="mt-2 text-sm text-white/70">{intro}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={closeLabel}
+            className="rounded-full border border-white/20 p-1 text-white/60 transition hover:border-white/40 hover:text-white"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="space-y-5 text-sm text-white/75">
+          {sections.map((section) => (
+            <section key={section.heading}>
+              <h3 className="text-[13px] font-semibold uppercase tracking-[0.28em] text-white/80">
+                {section.heading}
+              </h3>
+              <p className="mt-2 leading-relaxed text-white/70">
+                {section.body}
+              </p>
+            </section>
+          ))}
+        </div>
+
+        <div className="mt-6 flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md border border-white/25 px-4 py-2 text-sm text-white/80 transition hover:border-white/45 hover:text-white"
+          >
+            {closeLabel}
+          </button>
         </div>
       </div>
     </div>

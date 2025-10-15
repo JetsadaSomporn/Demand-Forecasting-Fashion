@@ -72,6 +72,46 @@ export const dictionaries = {
         continue: "Continue with Google",
         redirect: "Redirecting to Google…",
       },
+      legal: {
+        notice: "By continuing, you agree to our",
+        and: "and",
+        termsLink: "Terms of Service",
+        privacyLink: "Privacy Policy",
+        terms: {
+          title: "Terms of Service",
+          intro:
+            "Forecast helps teams estimate fashion demand. Using the app means you follow these ground rules so everyone stays protected.",
+          sections: {
+            usageTitle: "Responsible use",
+            usageBody:
+              "Use the workspace for lawful, professional forecasting work. Do not attempt to reverse engineer the service or overload shared infrastructure.",
+            dataTitle: "Your data",
+            dataBody:
+              "Uploaded product details and sales files remain yours. We only process them to deliver forecasts and never resell or publish your information.",
+            reliabilityTitle: "Availability & changes",
+            reliabilityBody:
+              "We aim for high uptime but may pause the service for maintenance. Features can evolve—major changes will be announced ahead of time.",
+          },
+          close: "Close",
+        },
+        privacy: {
+          title: "Privacy Policy",
+          intro:
+            "We collect only the essentials so the app can sign you in securely and generate results.",
+          sections: {
+            accountTitle: "Authentication",
+            accountBody:
+              "Email addresses are used solely to send login links or authenticate with Google. We do not share them with third parties outside Supabase and Google.",
+            storageTitle: "Stored content",
+            storageBody:
+              "Images and CSVs you upload live in our Supabase storage. You may delete them at any time from the workspace or by contacting support.",
+            analyticsTitle: "Telemetry",
+            analyticsBody:
+              "Basic usage metrics help us keep the service reliable. No ads, trackers, or cross-site profiling are used.",
+          },
+          close: "Close",
+        },
+      },
       alerts: {
         checkEmail: "Check your inbox for a login link.",
         signedOut: "Signed out successfully.",
@@ -315,6 +355,46 @@ export const dictionaries = {
       google: {
         continue: "เข้าสู่ระบบด้วย Google",
         redirect: "กำลังนำคุณไปยัง Google…",
+      },
+      legal: {
+        notice: "เมื่อดำเนินการต่อ ถือว่ายอมรับ",
+        and: "และ",
+        termsLink: "ข้อกำหนดการใช้งาน",
+        privacyLink: "นโยบายความเป็นส่วนตัว",
+        terms: {
+          title: "ข้อกำหนดการใช้งาน",
+          intro:
+            "Forecast ถูกออกแบบมาเพื่อช่วยทีมคาดการณ์ความต้องการสินค้าแฟชั่น โปรดใช้งานตามหลักเกณฑ์ต่อไปนี้เพื่อให้ทุกฝ่ายปลอดภัยและใช้งานได้ต่อเนื่อง",
+          sections: {
+            usageTitle: "การใช้งานอย่างรับผิดชอบ",
+            usageBody:
+              "ใช้เวิร์กสเปซเพื่อการทำงานที่ถูกกฎหมายเท่านั้น ห้ามพยายามแกะโค้ดหรือโจมตีระบบเพื่อกดดันโครงสร้างพื้นฐานร่วม",
+            dataTitle: "ข้อมูลของคุณ",
+            dataBody:
+              "รายละเอียดสินค้าและไฟล์ยอดขายยังเป็นของคุณ เราจะประมวลผลเพื่อสร้างผลคาดการณ์เท่านั้น และจะไม่ขายต่อหรือเผยแพร่สู่สาธารณะ",
+            reliabilityTitle: "ความพร้อมให้บริการและการเปลี่ยนแปลง",
+            reliabilityBody:
+              "เราพยายามรักษาความพร้อมใช้งาน แต่บางครั้งจำเป็นต้องหยุดระบบเพื่อซ่อมบำรุง และอาจมีการอัปเดตฟีเจอร์โดยแจ้งล่วงหน้าเมื่อมีการเปลี่ยนแปลงสำคัญ",
+          },
+          close: "ปิด",
+        },
+        privacy: {
+          title: "นโยบายความเป็นส่วนตัว",
+          intro:
+            "เรารวบรวมเฉพาะข้อมูลที่จำเป็นเพื่อให้ระบบลงชื่อเข้าใช้ได้อย่างปลอดภัยและสร้างผลลัพธ์ให้คุณ",
+          sections: {
+            accountTitle: "การยืนยันตัวตน",
+            accountBody:
+              "ใช้อีเมลเพื่อส่งลิงก์เข้าสู่ระบบหรือยืนยันผ่าน Google เท่านั้น จะไม่แชร์กับบุคคลที่สามนอกเหนือจาก Supabase และ Google",
+            storageTitle: "เนื้อหาที่จัดเก็บ",
+            storageBody:
+              "รูปภาพและไฟล์ CSV ที่อัปโหลดจะเก็บไว้ใน Supabase คุณสามารถลบได้ทุกเมื่อผ่านเวิร์กสเปซหรือแจ้งทีมสนับสนุน",
+            analyticsTitle: "การวัดผลการใช้งาน",
+            analyticsBody:
+              "เราบันทึกข้อมูลการใช้งานแบบพื้นฐานเพื่อดูแลระบบ ไม่ใช้โฆษณา ตัวติดตาม หรือการโปรไฟล์ข้ามเว็บไซต์",
+          },
+          close: "ปิด",
+        },
       },
       alerts: {
         checkEmail: "กรุณาตรวจอีเมลเพื่อกดลิงก์เข้าสู่ระบบ",
