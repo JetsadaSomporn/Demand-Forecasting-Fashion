@@ -154,10 +154,10 @@ export default function LoginForm() {
       <div className="flex flex-1 items-center justify-center px-6">
         <div className="w-full max-w-sm space-y-6">
           <div className="space-y-2 text-left">
-            <h1 className="text-[32px] font-semibold tracking-tight text-white">
+            <h1 className="text-[28px] font-semibold tracking-tight text-white sm:text-[32px]">
               {t("login.title")}
             </h1>
-            <p className="text-[13px] text-white/60">
+            <p className="text-sm leading-relaxed text-white/60">
               {t("login.description")}
             </p>
           </div>
@@ -211,11 +211,11 @@ export default function LoginForm() {
             </div>
           ) : null}
 
-          <p className="pt-4 text-center text-[11px] text-white/55">
+          <p className="pt-2 text-center text-xs text-white/60 sm:pt-4">
             {t("login.legal.notice")}{" "}
             <button
               type="button"
-              className="font-medium text-white underline decoration-white/40 underline-offset-2 transition hover:text-white/90 hover:decoration-white"
+              className="font-medium text-white underline decoration-white/40 underline-offset-2 transition hover:text-white/90 hover:decoration-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
               onClick={() => setActiveLegal("terms")}
             >
               {t("login.legal.termsLink")}
@@ -223,7 +223,7 @@ export default function LoginForm() {
             {t("login.legal.and")}{" "}
             <button
               type="button"
-              className="font-medium text-white underline decoration-white/40 underline-offset-2 transition hover:text-white/90 hover:decoration-white"
+              className="font-medium text-white underline decoration-white/40 underline-offset-2 transition hover:text-white/90 hover:decoration-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
               onClick={() => setActiveLegal("privacy")}
             >
               {t("login.legal.privacyLink")}
@@ -268,13 +268,13 @@ type LegalModalProps = {
 function LegalModal({ title, intro, sections, closeLabel, onClose }: LegalModalProps) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6 backdrop-blur"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-md sm:px-6"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-white/15 bg-white/10 p-6 text-left text-white shadow-2xl"
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-black/30 backdrop-blur-xl p-5 text-left text-white shadow-[0_24px_70px_rgba(0,0,0,0.5)] sm:p-6"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">
@@ -282,15 +282,15 @@ function LegalModal({ title, intro, sections, closeLabel, onClose }: LegalModalP
             <h2 className="text-lg font-semibold tracking-wide text-white">
               {title}
             </h2>
-            <p className="mt-2 text-sm text-white/70">{intro}</p>
+            <p className="mt-2 text-sm leading-relaxed text-white/70">{intro}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label={closeLabel}
-            className="rounded-full border border-white/20 p-1 text-white/60 transition hover:border-white/40 hover:text-white"
+            className="rounded-full border border-white/20 px-2 text-lg text-white/60 transition hover:border-white/40 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
           >
-            ×
+            <span aria-hidden>×</span>
           </button>
         </div>
 

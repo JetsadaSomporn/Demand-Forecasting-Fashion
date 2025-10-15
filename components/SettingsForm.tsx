@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { settingsSchema, type SettingsFormValues } from "@/lib/validators";
 import { useTranslation } from "@/lib/i18n/client";
@@ -47,7 +47,8 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
     register,
     handleSubmit,
     watch,
-    formState: { errors, isSubmitting },
+  formState: { errors, isSubmitting },
+  getValues,
   } = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: defaults,
@@ -56,11 +57,49 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
   const [status, setStatus] = useState<string | null>(null);
   const { setTheme: setClientTheme } = useTheme();
   const selectedTheme = watch("theme");
+  const hasAppliedInitialTheme = useRef(false);
 
   useEffect(() => {
     if (!selectedTheme) return;
     setClientTheme(selectedTheme);
-  }, [selectedTheme, setClientTheme]);
+    if (!hasAppliedInitialTheme.current) {
+      hasAppliedInitialTheme.current = true;
+      return;
+    }
+
+    let cancelled = false;
+    const persistTheme = async () => {
+      try {
+        setStatus(t("settings.buttons.saving"));
+        const payload = { ...getValues(), theme: selectedTheme };
+        const response = await fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || t("settings.errors.saveFailed"));
+        }
+        if (!cancelled) {
+          setStatus(t("settings.status.saved"));
+        }
+      } catch (error) {
+        console.error(error);
+        if (!cancelled) {
+          setStatus(
+            error instanceof Error ? error.message : t("settings.errors.saveFailed")
+          );
+        }
+      }
+    };
+
+    void persistTheme();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedTheme, setClientTheme, getValues, t]);
   const fieldClassName =
     "w-full rounded-lg border border-white/20 bg-white/12 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-white focus:ring-2 focus:ring-white/30";
   const labelClassName =
@@ -163,13 +202,7 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
                       className="sr-only"
                       {...register("theme")}
                     />
-                    <div
-                      className={`h-20 w-full rounded-lg ${
-                        option.value === "dark"
-                          ? "theme-card-preview-dark"
-                          : "theme-card-preview-light"
-                      }`}
-                    />
+                    <div className="hidden" />
                     <div>
                       <p className="text-sm font-semibold uppercase tracking-[0.28em] text-white">
                         {t(option.titleKey)}

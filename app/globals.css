@@ -389,16 +389,15 @@ button {
 
 .theme-card-preview-dark,
 .theme-card-preview-light {
-  border-radius: 0.75rem;
-  border: 1px solid var(--border-white-20);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 20px 35px rgba(0, 0, 0, 0.25);
+  display: none;
 }
 
-.theme-card-preview-dark {
-  background: var(--theme-preview-dark);
+/* Hide scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
-.theme-card-preview-light {
-  background: var(--theme-preview-light);
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
 }

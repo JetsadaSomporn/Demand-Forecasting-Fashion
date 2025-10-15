@@ -29,7 +29,7 @@ export default function AppShell({ children, user }: AppShellProps) {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-background via-surface/70 to-background text-foreground">
-  <header className="fixed inset-x-0 top-0 z-40 bg-transparent">
+      <header className="fixed inset-x-0 top-0 z-40 bg-transparent">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3">
           <Link href="/" className="font-display text-lg tracking-[0.4em] uppercase text-foreground">
             {t("common.brand")}
@@ -37,8 +37,8 @@ export default function AppShell({ children, user }: AppShellProps) {
           <div className="hidden flex-1 items-center justify-center md:flex">
             <Navigation items={navItems} />
           </div>
-          <div className="flex items-center gap-4 text-foreground/70">
-            <span className="hidden rounded-full px-4 py-2 text-[13px] text-foreground/80 md:inline-block">
+          <div className="flex items-center gap-3 text-foreground/70">
+            <span className="whitespace-nowrap text-[13px] text-foreground/80">
               {label}
             </span>
             <Link
@@ -49,8 +49,8 @@ export default function AppShell({ children, user }: AppShellProps) {
             </Link>
           </div>
         </div>
-  <div className="md:hidden bg-transparent px-6 pb-3 pt-2">
-          <div className="overflow-x-auto">
+        <div className="md:hidden bg-transparent px-6 pb-3 pt-2">
+          <div className="overflow-x-auto scrollbar-hide">
             <Navigation items={navItems} />
           </div>
         </div>

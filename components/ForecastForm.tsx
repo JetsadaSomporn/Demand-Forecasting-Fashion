@@ -532,7 +532,7 @@ const {
                   {imageFile.name}
                 </p>
               ) : null}
-              <button
+             <button
                 type="button"
                 onClick={handleExtract}
                 disabled={isExtracting}
@@ -758,7 +758,6 @@ const {
                 {t("forecastForm.buttons.reset")}
               </button>
             </div>
-
           </form>
         </div>
 
