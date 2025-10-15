@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { Buffer } from "node:buffer";
+import { randomUUID } from "node:crypto";
 import { imageExtractSchema } from "@/lib/validators";
+import { createSupabaseServiceClient, isSupabaseConfigured } from "@/lib/supabase";
 
 const COLOR_KEYWORDS: Record<string, string[]> = {
   Black: ["black", "noir", "ebony", "ink"],
@@ -16,6 +19,86 @@ const COLOR_KEYWORDS: Record<string, string[]> = {
 
 const QWEN_API_URL = "https://router.huggingface.co/v1/chat/completions";
 const QWEN_MODEL = "Qwen/Qwen2.5-VL-7B-Instruct:hyperbolic";
+const SUPABASE_IMAGE_BUCKET =
+  process.env.SUPABASE_IMAGE_BUCKET || "product-images";
+const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1 hour window for Qwen to fetch the asset
+const DATA_URL_REGEX =
+  /^data:(?<mime>image\/[a-z0-9.+-]+);base64,(?<payload>[a-zA-Z0-9+/=]+)$/i;
+
+function extensionFromMime(mime: string) {
+  switch (mime) {
+    case "image/jpeg":
+    case "image/jpg":
+      return "jpg";
+    case "image/png":
+      return "png";
+    case "image/webp":
+      return "webp";
+    case "image/heic":
+      return "heic";
+    case "image/heif":
+      return "heif";
+    default:
+      return null;
+  }
+}
+
+async function resolveImageForQwen(source: string) {
+  if (!source.startsWith("data:")) {
+    return source;
+  }
+
+  const match = DATA_URL_REGEX.exec(source);
+  if (!match?.groups?.mime || !match.groups.payload) {
+    throw new Error("Invalid data URL provided for image analysis.");
+  }
+
+  if (!isSupabaseConfigured("service")) {
+    throw new Error(
+      "Received data URL image but Supabase service credentials are missing. Unable to upload image for Qwen."
+    );
+  }
+
+  const { mime, payload } = match.groups;
+  const extension = extensionFromMime(mime);
+  if (!extension) {
+    throw new Error(`Unsupported image MIME type: ${mime}`);
+  }
+
+  const buffer = Buffer.from(payload, "base64");
+  const objectKey = `qwen-extract/${randomUUID()}.${extension}`;
+
+  const supabase = createSupabaseServiceClient();
+  const bucket = supabase.storage.from(SUPABASE_IMAGE_BUCKET);
+
+  const upload = await bucket.upload(objectKey, buffer, {
+    cacheControl: "300",
+    contentType: mime,
+    upsert: true,
+  });
+
+  if (upload.error) {
+    throw new Error(
+      `Failed to upload inline image for Qwen: ${
+        upload.error.message || "Unknown Supabase error"
+      }`
+    );
+  }
+
+  const { data: signedData, error: signedError } = await bucket.createSignedUrl(
+    objectKey,
+    SIGNED_URL_TTL_SECONDS
+  );
+
+  if (signedError || !signedData?.signedUrl) {
+    throw new Error(
+      signedError?.message ||
+        "Unable to create signed URL for uploaded image asset."
+    );
+  }
+
+  return signedData.signedUrl;
+}
 
 function heuristicFromFilename(source: string | null | undefined) {
   if (!source) {
@@ -213,13 +296,15 @@ export async function POST(request: Request) {
     }
 
     try {
-      const imageUrl = payload.imageUrl || payload.imageBase64;
-      
-      if (!imageUrl) {
+      const imageSource = payload.imageUrl ?? payload.imageBase64 ?? undefined;
+
+      if (!imageSource) {
         throw new Error("No image URL or base64 data provided");
       }
 
-      const result = await analyzeImageWithQwen(imageUrl);
+      const resolvedImageUrl = await resolveImageForQwen(imageSource);
+
+      const result = await analyzeImageWithQwen(resolvedImageUrl);
 
       return NextResponse.json({
         category: result.category,
