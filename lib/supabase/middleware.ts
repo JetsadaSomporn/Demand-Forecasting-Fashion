@@ -9,6 +9,12 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Skip auth check for static assets and API routes to improve performance
+  if (path.startsWith('/api/') || path.startsWith('/_next/') || 
+      path.match(/\.(ico|png|jpg|jpeg|svg|gif|webp)$/)) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -22,7 +28,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
+          cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value);
           });
           supabaseResponse = NextResponse.next({
@@ -40,6 +46,7 @@ export async function updateSession(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
 
+  // Validate and refresh session
   await supabase.auth.getUser();
 
   return supabaseResponse;

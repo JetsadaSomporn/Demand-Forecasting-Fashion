@@ -101,7 +101,11 @@ export default function LoginForm() {
     }
   };
 
-    const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    setError(null);
+    setMessage(null);
+
     try {
       const supabase = getSupabaseBrowserClient();
       const { error } = await supabase.auth.signInWithOAuth({
@@ -120,6 +124,8 @@ export default function LoginForm() {
       } else {
         setError({ key: "login.errors.generic" });
       }
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 

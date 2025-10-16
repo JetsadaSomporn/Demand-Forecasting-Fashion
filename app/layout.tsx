@@ -117,24 +117,9 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <Providers initialLanguage={language} initialTheme={initialTheme}>
-          <div className="relative min-h-screen overflow-hidden">
-            <video
-              className="fixed inset-0 z-[-2] h-full w-full object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-              poster="https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1920&q=80"
-            >
-              <source src="/media/hero.mp4" type="video/mp4" />
-            </video>
-            <div className="theme-linear-overlay fixed inset-0 z-[-1]" aria-hidden />
-            <div className="theme-radial-overlay fixed inset-0 z-[-1]" aria-hidden />
-
-            <main className="relative z-10 flex min-h-screen flex-col">
-              {children}
-            </main>
-          </div>
+          <main className="flex min-h-screen flex-col">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>

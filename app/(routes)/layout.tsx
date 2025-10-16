@@ -1,10 +1,23 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import AppShell from "@/components/AppShell";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
-// Force dynamic rendering to ensure fresh session check
-export const dynamic = 'force-dynamic';
+// Cache layout for 5 minutes - middleware still refreshes session
+export const revalidate = 300;
+
+// Use React cache instead of unstable_cache to avoid dynamic data issues
+// This caches for the duration of the request only
+const getProfile = cache(async (userId: string) => {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", userId)
+    .maybeSingle();
+  return data;
+});
 
 export default async function RoutesLayout({
   children,
@@ -19,17 +32,15 @@ export default async function RoutesLayout({
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name")
-    .eq("id", user.id)
-    .maybeSingle();
+  // Use React cache - deduplicates queries within the same request
+  const profile = await getProfile(user.id);
 
   const displayName =
     profile?.display_name ??
     (user.user_metadata?.full_name as string | undefined) ??
     null;
 
+  // Only insert if profile doesn't exist (no caching on insert)
   if (!profile) {
     await supabase.from("profiles").insert({
       id: user.id,

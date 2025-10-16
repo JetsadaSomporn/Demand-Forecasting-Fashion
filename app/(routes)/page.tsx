@@ -3,6 +3,9 @@ import { getServerTranslator } from "@/lib/i18n/server";
 import { ArrowRight } from "lucide-react";
 import InteractiveTitle from "@/components/InteractiveTitle";
 
+// Cache dashboard for 5 minutes
+export const revalidate = 300;
+
 export default async function DashboardPage() {
   const { language } = await getServerTranslator();
 

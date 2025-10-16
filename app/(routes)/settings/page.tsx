@@ -5,6 +5,9 @@ export const metadata = {
   title: "Settings · Fashion Demand",
 };
 
+// Cache settings page for 5 minutes
+export const revalidate = 300;
+
 export default async function SettingsPage() {
   const defaults = await getSettingsDefaults();
 

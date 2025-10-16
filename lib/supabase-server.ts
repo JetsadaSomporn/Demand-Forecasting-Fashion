@@ -36,6 +36,7 @@ export async function createSupabaseServerClient() {
             });
           }
         } catch (error) {
+          console.warn("[SupabaseServer] Failed to set cookies from server component", error);
           // The `setAll` method was called from a Server Component.
           // This can be ignored if you have middleware refreshing user sessions.
         }

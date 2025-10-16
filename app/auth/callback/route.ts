@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     return response;
   } catch (error) {
-
+    console.error("[Auth Callback] Error exchanging verification:", error);
     const loginUrl = new URL("/login", requestUrl.origin);
     loginUrl.searchParams.set("error", "callbackFailed");
     return NextResponse.redirect(loginUrl);

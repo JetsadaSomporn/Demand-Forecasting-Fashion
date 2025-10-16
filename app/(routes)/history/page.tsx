@@ -13,6 +13,9 @@ export const metadata = {
   title: "History · Fashion Demand",
 };
 
+// Cache history page for 2 minutes
+export const revalidate = 120;
+
 export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   const history = await getForecastHistory();
   const params = await searchParams;
