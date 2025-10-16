@@ -56,25 +56,37 @@ export async function middleware(request: NextRequest) {
         cookiesToSet.forEach(({ name, value, options }) => {
           cookiesSetCount++;
           
-          // Force proper cookie options for production
-          const finalOptions = {
-            ...options,
-            path: '/',
-            maxAge: options?.maxAge || 60 * 60 * 24 * 7, // 7 days default
-            sameSite: 'lax' as const,
-            secure: true, // Always secure for Vercel
-            httpOnly: options?.httpOnly ?? true,
-            domain: undefined, // Let browser set it automatically
-          };
+          // Build cookie string manually for more control
+          const cookieParts = [`${name}=${value}`];
           
+          if (options?.maxAge) {
+            cookieParts.push(`Max-Age=${options.maxAge}`);
+          } else {
+            cookieParts.push(`Max-Age=${60 * 60 * 24 * 7}`); // 7 days
+          }
+          
+          cookieParts.push(`Path=${options?.path || '/'}`);
+          cookieParts.push(`SameSite=${options?.sameSite || 'Lax'}`);
+          
+          if (options?.secure ?? true) {
+            cookieParts.push('Secure');
+          }
+          
+          if (options?.httpOnly ?? false) {
+            cookieParts.push('HttpOnly');
+          }
+          
+          const cookieString = cookieParts.join('; ');
+          
+          // Set using both methods for maximum compatibility
           request.cookies.set(name, value);
-          supabaseResponse.cookies.set(name, value, finalOptions);
+          supabaseResponse.headers.append('Set-Cookie', cookieString);
           
           if (shouldLog) {
             console.log("[Middleware] 🍪 Set cookie:", {
               name,
               valueLength: value?.length || 0,
-              options: finalOptions,
+              cookieString: cookieString.substring(0, 100) + '...',
             });
           }
         });
