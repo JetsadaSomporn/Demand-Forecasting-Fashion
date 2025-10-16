@@ -1,10 +1,6 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import {
-  createServerClient,
-  type CookieOptions,
-} from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 import { assertSupabaseEnv } from "@/lib/supabase";
+import { createSupabaseRouteHandlerClient } from "@/lib/supabase-server";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -29,7 +25,7 @@ function sanitizeRedirect(path: string | null | undefined) {
   return "/";
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   assertSupabaseEnv("anon");
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
@@ -40,30 +36,7 @@ export async function GET(request: Request) {
   const redirectPath = sanitizeRedirect(requestUrl.searchParams.get("redirect"));
   const redirectUrl = new URL(redirectPath, requestUrl.origin);
   const response = NextResponse.redirect(redirectUrl);
-  const cookieStore = await cookies();
-
-  const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    cookies: {
-      get(name: string) {
-        return cookieStore.get(name)?.value;
-      },
-      set(name: string, value: string, options: CookieOptions) {
-        response.cookies.set({
-          name,
-          value,
-          ...options,
-        });
-      },
-      remove(name: string, options: CookieOptions) {
-        response.cookies.set({
-          name,
-          value: "",
-          ...options,
-          maxAge: 0,
-        });
-      },
-    },
-  });
+  const supabase = createSupabaseRouteHandlerClient(request, response);
 
   const tokenHash = requestUrl.searchParams.get("token_hash");
   const code = requestUrl.searchParams.get("code");
