@@ -13,32 +13,34 @@ export default async function RoutesLayout({
 }) {
 
   const supabase = await createSupabaseServerClient();
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  
+  // Use getUser() instead of getSession() to validate with Supabase server
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-  console.log("[SSR] Supabase session:", session, sessionError);
+  console.log("[SSR] Supabase user:", user?.id, userError?.message);
 
-  if (!session) {
-    console.warn("[SSR] No session found, redirecting to /login");
+  if (!user || userError) {
+    console.warn("[SSR] No valid user found, redirecting to /login");
     redirect("/login");
   }
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("display_name")
-    .eq("id", session.user.id)
+    .eq("id", user.id)
     .maybeSingle();
 
   console.log("[SSR] Profile:", profile, profileError);
 
   const displayName =
     profile?.display_name ??
-    (session.user.user_metadata?.full_name as string | undefined) ??
+    (user.user_metadata?.full_name as string | undefined) ??
     null;
 
   if (!profile) {
     const { error: insertError } = await supabase.from("profiles").insert({
-      id: session.user.id,
-      email: session.user.email,
+      id: user.id,
+      email: user.email,
       display_name: displayName,
     });
     if (insertError) console.error("[SSR] Insert profile error:", insertError);
@@ -47,7 +49,7 @@ export default async function RoutesLayout({
   return (
     <AppShell
       user={{
-        email: session.user.email,
+        email: user.email,
         displayName,
       }}
     >
