@@ -28,7 +28,7 @@ export default function InteractiveTitle({ title }: { title: string }) {
       onMouseEnter={() => setIsActive(true)}
       onMouseLeave={() => setIsActive(false)}
     >
-      <h1 className="relative font-display text-[clamp(4.5rem,13vw,11rem)] uppercase tracking-[0.08em] text-white drop-shadow-[0_40px_80px_rgba(0,0,0,0.45)] select-none">
+      <h1 className="relative font-display text-[clamp(3.5rem,12vw,11rem)] uppercase tracking-[0.08em] text-white drop-shadow-[0_40px_80px_rgba(0,0,0,0.45)] select-none sm:text-[clamp(4rem,11vw,11rem)]">
         {title}
       </h1>
       
@@ -44,7 +44,7 @@ export default function InteractiveTitle({ title }: { title: string }) {
               WebkitMaskImage: `radial-gradient(circle 140px at ${cursorPosition.x}px ${cursorPosition.y}px, black 20%, transparent 80%)`,
             }}
           >
-            <h1 className="font-display text-[clamp(4.5rem,13vw,11rem)] uppercase tracking-[0.08em] text-white drop-shadow-[0_40px_80px_rgba(0,0,0,0.45)]">
+            <h1 className="font-display text-[clamp(3.5rem,12vw,11rem)] uppercase tracking-[0.08em] text-white drop-shadow-[0_40px_80px_rgba(0,0,0,0.45)] sm:text-[clamp(4rem,11vw,11rem)]">
               {title}
             </h1>
           </div>

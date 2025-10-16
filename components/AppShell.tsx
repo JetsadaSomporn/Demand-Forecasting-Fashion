@@ -55,7 +55,9 @@ export default function AppShell({ children, user }: AppShellProps) {
           </div>
         </div>
       </header>
-      <main className="pt-0 pb-12 lg:pb-16">{children}</main>
+      <main className="pt-0 pb-12 lg:pb-16">
+        {children}
+      </main>
     </div>
   );
 }

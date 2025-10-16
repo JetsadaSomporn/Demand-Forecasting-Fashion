@@ -1,9 +1,5 @@
 import { cookies } from "next/headers";
-import {
-  createServerClient,
-  type CookieOptions,
-  type CookieOptionsWithName,
-} from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
 import type { NextRequest, NextResponse } from "next/server";
 import { assertSupabaseEnv } from "./supabase";
 
@@ -16,40 +12,26 @@ export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
 
   return createServerClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
-    cookies: buildHeaderCookieAdapter({
-      getAll: () => cookieStore.getAll(),
-      setAll: (cookiesToSet) => {
-        for (const cookie of cookiesToSet) {
-          try {
-            const setFn = (cookieStore as unknown as Record<string, unknown>).set;
-            if (typeof setFn === "function") {
-              (setFn as (name: string, value: string, options: CookieOptions) => void)(
-                cookie.name,
-                cookie.value,
-                cookie.options
-              );
-            }
-          } catch (error) {
-            console.error(`[SSR Cookie] setAll ${cookie.name} failed:`, error);
-          }
-        }
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
       },
-    }),
+    },
   });
 }
 
 export function createSupabaseRouteHandlerClient(
   request: NextRequest,
   response: NextResponse,
-  options?: { cookieOptions?: CookieOptionsWithName }
 ) {
   assertSupabaseEnv("anon");
 
   return createServerClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
-    cookieOptions: options?.cookieOptions,
-    cookies: buildHeaderCookieAdapter({
-      getAll: () => request.cookies.getAll(),
-      setAll: (cookiesToSet) => {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
         for (const cookie of cookiesToSet) {
           response.cookies.set({
             name: cookie.name,
@@ -58,36 +40,6 @@ export function createSupabaseRouteHandlerClient(
           });
         }
       },
-    }),
+    },
   });
-}
-
-export function createSupabaseMiddlewareClient(
-  request: NextRequest,
-  response: NextResponse,
-  options?: { cookieOptions?: CookieOptionsWithName }
-) {
-  return createSupabaseRouteHandlerClient(request, response, options);
-}
-
-type CookieAdapter = {
-  getAll: () => Array<{ name: string; value: string }>;
-  setAll: (
-    cookiesToSet: Array<{
-      name: string;
-      value: string;
-      options: CookieOptions;
-    }>
-  ) => void;
-};
-
-function buildHeaderCookieAdapter(adapter: CookieAdapter) {
-  return {
-    getAll() {
-      return adapter.getAll();
-    },
-    setAll(cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>) {
-      adapter.setAll(cookiesToSet);
-    },
-  };
 }
