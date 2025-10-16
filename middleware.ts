@@ -5,17 +5,15 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export async function middleware(request: NextRequest) {
-  // Create a response object
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
-
   // Only process if Supabase is configured
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    return response;
+    return NextResponse.next();
   }
+
+  // Create a fresh response
+  let supabaseResponse = NextResponse.next({
+    request,
+  });
 
   // Create Supabase client with cookie handling
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -24,20 +22,15 @@ export async function middleware(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        for (const cookie of cookiesToSet) {
-          // Ensure proper cookie options for production
-          const cookieOptions = {
-            ...cookie.options,
-            sameSite: 'lax' as const,
+        // Update both request and response cookies
+        cookiesToSet.forEach(({ name, value, options }) => {
+          request.cookies.set(name, value);
+          supabaseResponse.cookies.set(name, value, {
+            ...options,
+            sameSite: 'lax',
             secure: process.env.NODE_ENV === 'production',
-          };
-          
-          response.cookies.set({
-            name: cookie.name,
-            value: cookie.value,
-            ...cookieOptions,
           });
-        }
+        });
       },
     },
   });
@@ -50,10 +43,8 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Optional: Add logging for debugging
-  if (request.nextUrl.pathname.startsWith("/api/") || 
-      request.nextUrl.pathname.startsWith("/_next/")) {
-    // Skip logging for API routes and Next.js internal routes
-  } else {
+  if (!request.nextUrl.pathname.startsWith("/api/") && 
+      !request.nextUrl.pathname.startsWith("/_next/")) {
     console.log("[Middleware]", {
       path: request.nextUrl.pathname,
       hasUser: !!user,
@@ -62,7 +53,7 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  return response;
+  return supabaseResponse;
 }
 
 export const config = {
