@@ -43,6 +43,7 @@ export default function AppShell({ children, user }: AppShellProps) {
             </span>
             <Link
               href="/logout"
+              prefetch={false}
               className="text-[11px] uppercase tracking-[0.35em] text-foreground transition hover:text-accent"
             >
               {t("common.signOut")}

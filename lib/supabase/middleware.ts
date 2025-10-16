@@ -2,6 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  
+  // Skip auth check for logout and auth routes
+  if (path === '/logout' || path.startsWith('/auth/')) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -38,7 +45,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   console.log("[Middleware]", {
-    path: request.nextUrl.pathname,
+    path,
     hasUser: !!user,
   });
 
