@@ -25,10 +25,17 @@ export async function middleware(request: NextRequest) {
       },
       setAll(cookiesToSet) {
         for (const cookie of cookiesToSet) {
+          // Ensure proper cookie options for production
+          const cookieOptions = {
+            ...cookie.options,
+            sameSite: 'lax' as const,
+            secure: process.env.NODE_ENV === 'production',
+          };
+          
           response.cookies.set({
             name: cookie.name,
             value: cookie.value,
-            ...cookie.options,
+            ...cookieOptions,
           });
         }
       },
@@ -36,10 +43,11 @@ export async function middleware(request: NextRequest) {
   });
 
   // Refresh session if expired - required for Server Components
-  // This will automatically refresh the session and update cookies
+  // Use getUser() instead of getSession() to force token refresh
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
   // Optional: Add logging for debugging
   if (request.nextUrl.pathname.startsWith("/api/") || 
@@ -48,8 +56,9 @@ export async function middleware(request: NextRequest) {
   } else {
     console.log("[Middleware]", {
       path: request.nextUrl.pathname,
-      hasSession: !!session,
-      userId: session?.user?.id,
+      hasUser: !!user,
+      userId: user?.id,
+      error: error?.message,
     });
   }
 

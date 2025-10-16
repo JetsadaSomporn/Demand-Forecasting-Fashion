@@ -19,16 +19,23 @@ export async function createSupabaseServerClient() {
       setAll(cookiesToSet) {
         try {
           for (const cookie of cookiesToSet) {
+            const cookieOptions = {
+              ...cookie.options,
+              sameSite: 'lax' as const,
+              secure: process.env.NODE_ENV === 'production',
+            };
+            
             cookieStore.set({
               name: cookie.name,
               value: cookie.value,
-              ...cookie.options,
+              ...cookieOptions,
             });
           }
         } catch (error) {
           // The `setAll` method was called from a Server Component.
           // This can be ignored if you have middleware refreshing
           // user sessions.
+          console.warn('[Supabase Server] Cookie set failed:', error);
         }
       },
     },
@@ -48,10 +55,16 @@ export function createSupabaseRouteHandlerClient(
       },
       setAll(cookiesToSet) {
         for (const cookie of cookiesToSet) {
+          const cookieOptions = {
+            ...cookie.options,
+            sameSite: 'lax' as const,
+            secure: process.env.NODE_ENV === 'production',
+          };
+          
           response.cookies.set({
             name: cookie.name,
             value: cookie.value,
-            ...cookie.options,
+            ...cookieOptions,
           });
         }
       },

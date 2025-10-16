@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
+// Force dynamic rendering to ensure fresh session check
+export const dynamic = 'force-dynamic';
+
 export default async function RoutesLayout({
   children,
 }: {
