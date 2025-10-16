@@ -14,9 +14,19 @@ export async function createSupabaseServerClient() {
   return createServerClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
     cookies: {
       getAll() {
-        return cookieStore.getAll();
+        const allCookies = cookieStore.getAll();
+        console.log('[Supabase Server] 📥 getAll() called:', {
+          total: allCookies.length,
+          supabase: allCookies.filter(c => c.name.startsWith('sb-')).length,
+        });
+        return allCookies;
       },
       setAll(cookiesToSet) {
+        console.log('[Supabase Server] 🍪 setAll() called:', {
+          count: cookiesToSet.length,
+          names: cookiesToSet.map(c => c.name),
+        });
+        
         try {
           for (const cookie of cookiesToSet) {
             const cookieOptions = {
@@ -31,11 +41,12 @@ export async function createSupabaseServerClient() {
               ...cookieOptions,
             });
           }
+          console.log('[Supabase Server] ✅ Cookies set successfully');
         } catch (error) {
           // The `setAll` method was called from a Server Component.
           // This can be ignored if you have middleware refreshing
           // user sessions.
-          console.warn('[Supabase Server] Cookie set failed:', error);
+          console.warn('[Supabase Server] ⚠️ Cookie set failed:', error);
         }
       },
     },

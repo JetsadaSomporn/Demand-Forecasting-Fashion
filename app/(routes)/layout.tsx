@@ -14,13 +14,28 @@ export default async function RoutesLayout({
 
   const supabase = await createSupabaseServerClient();
   
+  // Log cookies available in Server Component
+  const { cookies: cookieStore } = await import('next/headers');
+  const allCookies = (await cookieStore()).getAll();
+  const supabaseCookies = allCookies.filter(c => c.name.startsWith('sb-'));
+  
+  console.log("[SSR Layout] 📥 Cookies available:", {
+    total: allCookies.length,
+    supabase: supabaseCookies.length,
+    names: supabaseCookies.map(c => c.name),
+  });
+  
   // Use getUser() instead of getSession() to validate with Supabase server
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-  console.log("[SSR] Supabase user:", user?.id, userError?.message);
+  console.log("[SSR Layout] 🔐 Auth result:", {
+    hasUser: !!user,
+    userId: user?.id,
+    error: userError?.message,
+  });
 
   if (!user || userError) {
-    console.warn("[SSR] No valid user found, redirecting to /login");
+    console.warn("[SSR Layout] ❌ No valid user found, redirecting to /login");
     redirect("/login");
   }
 

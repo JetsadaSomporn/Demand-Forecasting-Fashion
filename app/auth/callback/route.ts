@@ -43,11 +43,12 @@ export async function GET(request: NextRequest) {
   const rawType = requestUrl.searchParams.get("type") ?? "magiclink";
   const type = VERIFY_TYPES.has(rawType) ? rawType : "magiclink";
 
-  console.log("[Auth Callback] Params:", {
+  console.log("[Auth Callback] 📥 Request:", {
     tokenHash: tokenHash ? "present" : "missing",
     code: code ? "present" : "missing",
     type,
     redirectPath,
+    incomingCookies: request.cookies.getAll().filter(c => c.name.startsWith('sb-')).length,
   });
 
   try {
@@ -82,7 +83,13 @@ export async function GET(request: NextRequest) {
       throw new Error("Session was not created after authentication");
     }
 
-    console.log("[Auth Callback] Session established for user:", sessionData.session.user.id);
+    const outgoingCookies = response.cookies.getAll().filter(c => c.name.startsWith('sb-'));
+    console.log("[Auth Callback] ✅ Success:", {
+      userId: sessionData.session.user.id,
+      outgoingCookies: outgoingCookies.length,
+      cookieNames: outgoingCookies.map(c => c.name),
+      redirectTo: redirectUrl.toString(),
+    });
     return response;
   } catch (error) {
     const message =
