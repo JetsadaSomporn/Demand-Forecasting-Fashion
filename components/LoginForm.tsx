@@ -274,33 +274,33 @@ function LegalModal({ title, intro, sections, closeLabel, onClose }: LegalModalP
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-neutral-800/10 bg-white/85 p-5 text-left text-neutral-900 shadow-[0_20px_55px_rgba(15,23,42,0.14)] backdrop-blur-xl transition-colors sm:p-6 dark:border-white/15 dark:bg-black/45 dark:text-white dark:shadow-[0_24px_70px_rgba(0,0,0,0.55)]"
+        className="legal-modal-surface max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl p-5 text-left transition-colors sm:p-6"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold tracking-wide text-neutral-900 dark:text-white">
+            <h2 className="legal-modal-heading text-lg font-semibold tracking-wide">
               {title}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-white/70">{intro}</p>
+            <p className="legal-modal-subtext mt-2 text-sm leading-relaxed">{intro}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label={closeLabel}
-            className="rounded-full border border-neutral-900/20 px-2 text-lg text-neutral-600 transition hover:border-neutral-900/40 hover:text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300 dark:border-white/20 dark:text-white/60 dark:hover:border-white/40 dark:hover:text-white dark:focus-visible:outline-white/60"
+            className="legal-modal-button rounded-full px-2 text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
           >
             <span aria-hidden>×</span>
           </button>
         </div>
 
-        <div className="space-y-5 text-sm text-neutral-700 dark:text-white/75">
+        <div className="legal-modal-subtext space-y-5 text-sm">
           {sections.map((section) => (
             <section key={section.heading}>
-              <h3 className="text-[13px] font-semibold uppercase tracking-[0.28em] text-neutral-900 dark:text-white/80">
+              <h3 className="legal-modal-heading text-[13px] font-semibold uppercase tracking-[0.28em]">
                 {section.heading}
               </h3>
-              <p className="mt-2 leading-relaxed text-neutral-700 dark:text-white/70">
+              <p className="mt-2 leading-relaxed">
                 {section.body}
               </p>
             </section>
@@ -311,7 +311,7 @@ function LegalModal({ title, intro, sections, closeLabel, onClose }: LegalModalP
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-neutral-900/20 px-4 py-2 text-sm text-neutral-700 transition hover:border-neutral-900/40 hover:text-neutral-900 dark:border-white/25 dark:text-white/80 dark:hover:border-white/45 dark:hover:text-white"
+            className="legal-modal-button rounded-md px-4 py-2 text-sm"
           >
             {closeLabel}
           </button>
