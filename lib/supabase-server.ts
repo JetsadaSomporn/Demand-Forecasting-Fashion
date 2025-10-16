@@ -14,19 +14,9 @@ export async function createSupabaseServerClient() {
   return createServerClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
     cookies: {
       getAll() {
-        const allCookies = cookieStore.getAll();
-        console.log('[Supabase Server] 📥 getAll() called:', {
-          total: allCookies.length,
-          supabase: allCookies.filter(c => c.name.startsWith('sb-')).length,
-        });
-        return allCookies;
+        return cookieStore.getAll();
       },
       setAll(cookiesToSet) {
-        console.log('[Supabase Server] 🍪 setAll() called:', {
-          count: cookiesToSet.length,
-          names: cookiesToSet.map(c => c.name),
-        });
-        
         try {
           for (const cookie of cookiesToSet) {
             const cookieOptions = {
@@ -45,12 +35,9 @@ export async function createSupabaseServerClient() {
               ...cookieOptions,
             });
           }
-          console.log('[Supabase Server] ✅ Cookies set successfully');
         } catch (error) {
           // The `setAll` method was called from a Server Component.
-          // This can be ignored if you have middleware refreshing
-          // user sessions.
-          console.warn('[Supabase Server] ⚠️ Cookie set failed:', error);
+          // This can be ignored if you have middleware refreshing user sessions.
         }
       },
     },
@@ -73,18 +60,12 @@ export function createSupabaseRouteHandlerClient(
           const cookieOptions = {
             ...cookie.options,
             path: '/',
-            maxAge: cookie.options?.maxAge || 60 * 60 * 24 * 7, // 7 days
+            maxAge: cookie.options?.maxAge || 60 * 60 * 24 * 7,
             sameSite: 'lax' as const,
-            secure: true, // Always secure for Vercel
+            secure: true,
             httpOnly: cookie.options?.httpOnly ?? true,
             domain: undefined,
           };
-          
-          console.log('[Route Handler] Setting cookie:', {
-            name: cookie.name,
-            valueLength: cookie.value?.length || 0,
-            options: cookieOptions,
-          });
           
           response.cookies.set({
             name: cookie.name,

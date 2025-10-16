@@ -233,7 +233,6 @@ JSON only:
       return { correctedProduct: null };
     }
     const parsed = JSON.parse(jsonMatch[0]);
-    console.log("[LLM] Parsed result:", parsed);
     return { correctedProduct: parsed };
   } catch (error) {
     console.error("[LLM] Validation error:", error);
@@ -451,7 +450,6 @@ Return JSON ONLY with keys "month_column" and "quantity_column" that contain the
       return null;
     }
     const parsed = JSON.parse(jsonCandidate) as LlamaCsvResponse;
-    console.log("[CSV LLM] Parsed:", parsed);
     return parsed;
   } catch (error) {
     console.error("[CSV LLM] Failed to parse JSON:", error);
@@ -863,9 +861,7 @@ async function persistForecast(
 
 export async function POST(request: Request) {
   try {
-    console.log("[Forecast API] Received request");
     const raw = await request.json();
-    console.log("[Forecast API] Payload:", JSON.stringify(raw, null, 2));
     const extendedParsed = extendedForecastRequestSchema.parse(raw);
     const { externalResult, ...parsedWithoutExternal } = extendedParsed;
     const parsed = parsedWithoutExternal as ForecastRequest;
@@ -877,13 +873,11 @@ export async function POST(request: Request) {
     let productToUse = { ...productWithThaiNormalization };
     
     if (validation.correctedProduct) {
-      console.log("[Forecast] LLM corrected:", validation.correctedProduct);
       productToUse = {
         ...productToUse,
         ...validation.correctedProduct,
       };
     } else {
-      console.log("[Forecast] LLM failed, using fallback normalization");
       
       productToUse.category = (productToUse.category || "").toString().toUpperCase().trim();
       productToUse.color = (productToUse.color || "").toString().toUpperCase().trim();
@@ -916,13 +910,6 @@ export async function POST(request: Request) {
         productToUse.category = categoryMap[productToUse.category];
       }
     }
-    
-    console.log("[Forecast] Final product:", {
-      category: productToUse.category,
-      color: productToUse.color,
-      sizes: productToUse.sizes,
-      cost: productToUse.cost
-    });
 
     const normalizedProduct = {
       ...productToUse,
@@ -1023,8 +1010,6 @@ export async function POST(request: Request) {
       normalizedProduct,
       warningMessages || undefined
     );
-
-    console.log("[Forecast API] Success! ForecastId:", forecastId);
 
     return NextResponse.json(
       {

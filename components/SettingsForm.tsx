@@ -85,7 +85,6 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
           setStatus(t("settings.status.saved"));
         }
       } catch (error) {
-        console.error(error);
         if (!cancelled) {
           setStatus(
             error instanceof Error ? error.message : t("settings.errors.saveFailed")
@@ -120,7 +119,6 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
       setUiLanguage(values.language);
       setStatus(t("settings.status.saved"));
     } catch (error) {
-      console.error(error);
       setStatus(
         error instanceof Error ? error.message : t("settings.errors.saveFailed")
       );

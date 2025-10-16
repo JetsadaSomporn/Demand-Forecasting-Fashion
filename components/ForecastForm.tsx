@@ -260,8 +260,6 @@ const {
     setInsight("");
     setIsInsightStreaming(false);
 
-    console.log("[ForecastForm] Submitting with values:", values);
-
     try {
       const csv = await ensureCsvUpload();
       const image = await ensureImageUpload();
@@ -272,8 +270,6 @@ const {
           ? `${values.product.first_sale_month.slice(0, 7)}-01`
           : values.product.first_sale_month,
       };
-
-      console.log("[ForecastForm] Normalized product:", normalizedProduct);
 
       const resolvedModel: ForecastRequest["model"] = csv ? "lgbm_full" : "lgbm_meta";
 

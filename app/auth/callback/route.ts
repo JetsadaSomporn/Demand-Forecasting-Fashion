@@ -43,17 +43,8 @@ export async function GET(request: NextRequest) {
   const rawType = requestUrl.searchParams.get("type") ?? "magiclink";
   const type = VERIFY_TYPES.has(rawType) ? rawType : "magiclink";
 
-  console.log("[Auth Callback] 📥 Request:", {
-    tokenHash: tokenHash ? "present" : "missing",
-    code: code ? "present" : "missing",
-    type,
-    redirectPath,
-    incomingCookies: request.cookies.getAll().filter(c => c.name.startsWith('sb-')).length,
-  });
-
   try {
     if (tokenHash) {
-      console.log("[Auth Callback] Verifying OTP token…");
       const { error } = await supabase.auth.verifyOtp({
         token_hash: tokenHash,
         type: type as "magiclink" | "signup" | "recovery" | "email_change",
@@ -62,7 +53,6 @@ export async function GET(request: NextRequest) {
         throw error;
       }
     } else if (code) {
-      console.log("[Auth Callback] Exchanging PKCE code…");
       const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) {
         throw error;
@@ -83,18 +73,8 @@ export async function GET(request: NextRequest) {
       throw new Error("Session was not created after authentication");
     }
 
-    const outgoingCookies = response.cookies.getAll().filter(c => c.name.startsWith('sb-'));
-    console.log("[Auth Callback] ✅ Success:", {
-      userId: sessionData.session.user.id,
-      outgoingCookies: outgoingCookies.length,
-      cookieNames: outgoingCookies.map(c => c.name),
-      redirectTo: redirectUrl.toString(),
-    });
     return response;
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Authentication failed";
-    console.error("[Auth Callback] Error:", message, error);
 
     const loginUrl = new URL("/login", requestUrl.origin);
     loginUrl.searchParams.set("error", "callbackFailed");

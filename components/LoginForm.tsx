@@ -74,7 +74,6 @@ export default function LoginForm() {
     try {
       const supabase = getSupabaseBrowserClient();
       const redirectUrl = `${window.location.origin}/auth/callback`;
-      console.log("[Login] Sending magic link with redirect:", redirectUrl);
       
       const { error: signInError } = await supabase.auth.signInWithOtp({
         email,
@@ -85,15 +84,12 @@ export default function LoginForm() {
       });
 
       if (signInError) {
-        console.error("[Login] Sign in error:", signInError);
         throw signInError;
       }
 
-      console.log("[Login] Magic link sent successfully");
       setMessage({ key: "login.alerts.checkEmail" });
       setEmail("");
     } catch (err) {
-      console.error("[Login] Error sending magic link", err);
       if (err instanceof Error) {
         setError({ raw: err.message });
       } else {
@@ -105,39 +101,25 @@ export default function LoginForm() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setIsGoogleLoading(true);
-    setError(null);
-    setMessage(null);
-
+    const handleGoogleSignIn = async () => {
     try {
       const supabase = getSupabaseBrowserClient();
-      const redirectUrl = `${window.location.origin}/auth/callback`;
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            access_type: "offline",
-            prompt: "select_account",
-          },
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
-      if (oauthError) {
-        throw oauthError;
+      if (error) {
+        setError({ raw: error.message });
       }
-
-      setMessage({ key: "login.google.redirect" });
     } catch (err) {
-      console.error("[Login] Google sign-in error", err);
       if (err instanceof Error) {
         setError({ raw: err.message });
       } else {
         setError({ key: "login.errors.generic" });
       }
-    } finally {
-      setIsGoogleLoading(false);
     }
   };
 
