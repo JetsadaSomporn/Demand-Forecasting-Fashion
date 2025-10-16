@@ -31,8 +31,12 @@ export async function createSupabaseServerClient() {
           for (const cookie of cookiesToSet) {
             const cookieOptions = {
               ...cookie.options,
+              path: '/',
+              maxAge: cookie.options?.maxAge || 60 * 60 * 24 * 7,
               sameSite: 'lax' as const,
-              secure: process.env.NODE_ENV === 'production',
+              secure: true,
+              httpOnly: cookie.options?.httpOnly ?? true,
+              domain: undefined,
             };
             
             cookieStore.set({
@@ -68,9 +72,19 @@ export function createSupabaseRouteHandlerClient(
         for (const cookie of cookiesToSet) {
           const cookieOptions = {
             ...cookie.options,
+            path: '/',
+            maxAge: cookie.options?.maxAge || 60 * 60 * 24 * 7, // 7 days
             sameSite: 'lax' as const,
-            secure: process.env.NODE_ENV === 'production',
+            secure: true, // Always secure for Vercel
+            httpOnly: cookie.options?.httpOnly ?? true,
+            domain: undefined,
           };
+          
+          console.log('[Route Handler] Setting cookie:', {
+            name: cookie.name,
+            valueLength: cookie.value?.length || 0,
+            options: cookieOptions,
+          });
           
           response.cookies.set({
             name: cookie.name,

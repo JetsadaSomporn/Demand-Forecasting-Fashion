@@ -55,12 +55,28 @@ export async function middleware(request: NextRequest) {
         // Update both request and response cookies
         cookiesToSet.forEach(({ name, value, options }) => {
           cookiesSetCount++;
-          request.cookies.set(name, value);
-          supabaseResponse.cookies.set(name, value, {
+          
+          // Force proper cookie options for production
+          const finalOptions = {
             ...options,
-            sameSite: 'lax',
-            secure: process.env.NODE_ENV === 'production',
-          });
+            path: '/',
+            maxAge: options?.maxAge || 60 * 60 * 24 * 7, // 7 days default
+            sameSite: 'lax' as const,
+            secure: true, // Always secure for Vercel
+            httpOnly: options?.httpOnly ?? true,
+            domain: undefined, // Let browser set it automatically
+          };
+          
+          request.cookies.set(name, value);
+          supabaseResponse.cookies.set(name, value, finalOptions);
+          
+          if (shouldLog) {
+            console.log("[Middleware] 🍪 Set cookie:", {
+              name,
+              valueLength: value?.length || 0,
+              options: finalOptions,
+            });
+          }
         });
       },
     },
