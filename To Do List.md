@@ -24,7 +24,7 @@ Alright, we gotta ship the whole “Fashion Demand Forecast” thingy basically 
 - Python microservice (FastAPI or tiny Flask) wrapping LightGBM inference Lives beside Nextjs or on HF Space Need CLI entry + pinned deps
 
 ## 2 env setup (don’t forget to expose `envexample`)
-```
+
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
@@ -34,7 +34,7 @@ FORECAST_SERVICE_TOKEN=
 NEXT_PUBLIC_FORECAST_SERVICE_URL=
 HF_TOKEN=
 NVIDIA_API_KEY=
-```
+
 Graceful degradation mandatory when any value missing (no kaboom)
 
 ## 3 App architecture checklist (kinda strict)
@@ -98,7 +98,7 @@ Graceful degradation mandatory when any value missing (no kaboom)
 - If LightGBM pickle available → predict, convert from log scale with `expm1`, clamp to >= 0, round to int
 - If missing → fallback heuristics (weight tables with category/color etc)
 - Response format:
-```json
+json
 {
   "model": "lgbm_full",
   "horizon": 6,
@@ -108,7 +108,7 @@ Graceful degradation mandatory when any value missing (no kaboom)
   "metrics": {"rmse": 1234},
   "warning": "string or null"
 }
-```
+
 - Provide CLI entry for local runs; `requirementstxt` pinned (numpy, pandas, scikit-learn, lightgbm, joblib, fastapi/flask, uvicorn)
 
 ## 10 Database (Supabase / Postgres)
