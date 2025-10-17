@@ -23,6 +23,7 @@ export const forecastRequestSchema = z.object({
   model: z.enum(["lgbm_full", "lgbm_meta"]),
   horizon: z.number().int().min(1).max(12),
   product: productMetadataSchema,
+  currency: z.string().min(1).max(8).optional(),
   salesCsvUrl: z.string().url().optional().nullable(),
   salesCsvContent: z.string().optional().nullable(),
   imageUrl: z.string().url().optional().nullable(),

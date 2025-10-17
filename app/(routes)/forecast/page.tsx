@@ -1,4 +1,5 @@
 import ForecastForm from "@/components/ForecastForm";
+import { getSettingsDefaults } from "@/lib/queries";
 
 export const metadata = {
   title: "Forecast · Fashion Demand",
@@ -7,6 +8,7 @@ export const metadata = {
 // Cache forecast page for 5 minutes
 export const revalidate = 300;
 
-export default function ForecastPage() {
-  return <ForecastForm />;
+export default async function ForecastPage() {
+  const defaults = await getSettingsDefaults();
+  return <ForecastForm currency={defaults.currency} />;
 }

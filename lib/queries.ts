@@ -2,6 +2,7 @@ import { createSupabaseServiceClient, isSupabaseConfigured } from "./supabase";
 import { promises as fs } from "fs";
 import path from "path";
 import { resolveLanguage } from "@/lib/i18n";
+import { convertCurrencyToUsd, normalizeCurrencyCode } from "@/lib/currency";
 
 export type ForecastSummary = {
   id: string;
@@ -13,6 +14,7 @@ export type ForecastSummary = {
     sizes?: string | null;
     cost?: number | null;
     first_sale_month?: string | null;
+    currency?: string | null;
   };
   model_name: "lgbm_full" | "lgbm_meta";
   horizon: number;
@@ -83,11 +85,13 @@ type ForecastProductRecord = {
   sizes?: string | null;
   cost?: number | string | null;
   first_sale_month?: string | null;
+  currency?: string | null;
 };
 
 type ForecastParams = {
   months?: unknown;
   product?: ForecastProductRecord | null;
+  productCurrency?: string | null;
   plot?: {
     months?: unknown;
     seed?: { months?: unknown; values?: unknown } | null;
@@ -211,7 +215,7 @@ export async function getSettingsDefaults() {
     displayName: "",
     brandName: "",
     timezone: "Asia/Bangkok",
-    currency: "THB",
+    currency: "USD",
     language: resolveLanguage(undefined),
     theme: "dark" as "dark" | "light",
   };
@@ -230,7 +234,7 @@ export async function getSettingsDefaults() {
           displayName: data.display_name ?? defaults.displayName,
           brandName: data.brand_name ?? defaults.brandName,
           timezone: data.timezone ?? defaults.timezone,
-          currency: data.currency ?? defaults.currency,
+          currency: normalizeCurrencyCode(data.currency ?? defaults.currency),
           language: resolveLanguage(data.language),
           theme: (data.theme === "light" || data.theme === "dark" ? data.theme : defaults.theme),
         };
@@ -246,7 +250,7 @@ export async function getSettingsDefaults() {
       displayName: local.displayName ?? defaults.displayName,
       brandName: local.brandName ?? defaults.brandName,
       timezone: local.timezone ?? defaults.timezone,
-      currency: local.currency ?? defaults.currency,
+      currency: normalizeCurrencyCode(local.currency ?? defaults.currency),
       language: resolveLanguage(local.language),
       theme:
         local.theme === "light" || local.theme === "dark"
@@ -265,6 +269,12 @@ function normalizeForecastDetail(row: ForecastRowLike): ForecastDetail {
     ? row.products[0]
     : row.products ?? row.product ?? params.product ?? {}) as ForecastProductRecord | undefined;
 
+  const currencySource =
+    (typeof params.productCurrency === "string" && params.productCurrency) ||
+    (typeof productCandidate?.currency === "string" && productCandidate.currency) ||
+    (typeof params.product?.currency === "string" && params.product.currency) ||
+    null;
+
   const product = {
     sku:
       productCandidate?.sku ??
@@ -282,6 +292,7 @@ function normalizeForecastDetail(row: ForecastRowLike): ForecastDetail {
       productCandidate?.first_sale_month ??
       params.product?.first_sale_month ??
       null,
+    currency: currencySource ? normalizeCurrencyCode(currencySource) : null,
   };
 
   const monthsFromRow = ensureStringArray(row.months);
@@ -566,7 +577,8 @@ function generateHeuristicForecast(detail: ForecastDetail): number[] {
   const modelKey = detail.model_name;
   const product = detail.product ?? {};
   const sku = (product.sku || "SKU").toString().toUpperCase();
-  const cost = Math.max(1, normalizeNumber(product.cost) ?? 1);
+  const rawCost = normalizeNumber(product.cost) ?? 1;
+  const costUsd = Math.max(1, convertCurrencyToUsd(rawCost, product.currency));
   const category = (product.category || "").toString().toLowerCase();
   const color = (product.color || "").toString().toLowerCase();
   const sizes = (product.sizes || "").toString();
@@ -591,7 +603,7 @@ function generateHeuristicForecast(detail: ForecastDetail): number[] {
     .filter(Boolean).length;
   const sizeWeight = sizeCount * 4;
   const costWeight =
-    Math.log1p(cost) * (modelKey === "lgbm_meta" ? 6 : 8);
+    Math.log1p(costUsd) * (modelKey === "lgbm_meta" ? 6 : 8);
   const skuOffset = hashOffset(sku);
 
   return monthDates.map((targetMonth, idx) => {

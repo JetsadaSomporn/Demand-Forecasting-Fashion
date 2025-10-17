@@ -1,5 +1,5 @@
 import HistoryTable from "@/components/HistoryTable";
-import { getForecastHistory } from "@/lib/queries";
+import { getForecastHistory, getSettingsDefaults } from "@/lib/queries";
 import { cardClassName, headingClassName, subtleTextClassName } from "@/lib/theme";
 import { getServerTranslator } from "@/lib/i18n/server";
 
@@ -17,7 +17,7 @@ export const metadata = {
 export const revalidate = 120;
 
 export default async function HistoryPage({ searchParams }: HistoryPageProps) {
-  const history = await getForecastHistory();
+  const [history, settings] = await Promise.all([getForecastHistory(), getSettingsDefaults()]);
   const params = await searchParams;
   const { t } = await getServerTranslator();
 
@@ -30,5 +30,5 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
     );
   }
 
-  return <HistoryTable entries={history} initialId={params?.focus} />;
+  return <HistoryTable entries={history} initialId={params?.focus} defaultCurrency={settings.currency} />;
 }

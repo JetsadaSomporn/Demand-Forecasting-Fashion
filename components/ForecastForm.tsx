@@ -12,6 +12,7 @@ import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase";
 import { z } from "zod";
 import { useTranslation } from "@/lib/i18n/client";
 import { fetchForecastFromSpace } from "@/lib/forecast-space-client";
+import { convertCurrencyToUsd, normalizeCurrencyCode } from "@/lib/currency";
 
 const FORM_SCHEMA = forecastRequestSchema.pick({ horizon: true, product: true });
 
@@ -38,7 +39,11 @@ const sampleEditorialImage =
 // Use NEXT_PUBLIC_FORECAST_SERVICE_URL to hit the Hugging Face Space directly and dodge Vercel timeouts; fall back to the API route when unset.
 const FORECAST_SPACE_BASE = process.env.NEXT_PUBLIC_FORECAST_SERVICE_URL?.trim() || null;
 
-export default function ForecastForm() {
+type ForecastFormProps = {
+  currency?: string | null;
+};
+
+export default function ForecastForm({ currency }: ForecastFormProps) {
   const supabaseEnabled = isSupabaseConfigured("anon");
   const { t, language } = useTranslation();
   const renderError = useCallback(
@@ -65,6 +70,8 @@ export default function ForecastForm() {
   const [insight, setInsight] = useState<string>("");
   const [isInsightStreaming, setIsInsightStreaming] = useState(false);
   const [colorWarning, setColorWarning] = useState<string | null>(null);
+
+  const costCurrency = useMemo(() => normalizeCurrencyCode(currency), [currency]);
 
   useEffect(() => {
     if (!forecastResult?.forecastId) {
@@ -272,16 +279,24 @@ const {
       };
 
       const resolvedModel: ForecastRequest["model"] = csv ? "lgbm_full" : "lgbm_meta";
-
       const payload: ForecastRequest = {
         model: resolvedModel,
         horizon: values.horizon,
         product: normalizedProduct,
+        currency: costCurrency,
         salesCsvUrl: csv?.url ?? null,
         salesCsvContent: csv?.base64 ?? null,
         imageUrl: image?.url ?? null,
         imageBase64: image?.base64 ?? null,
         language,
+      };
+      const modelCost = convertCurrencyToUsd(payload.product.cost, costCurrency);
+      const payloadForModel: ForecastRequest = {
+        ...payload,
+        product: {
+          ...payload.product,
+          cost: modelCost > 0 ? modelCost : 1,
+        },
       };
 
       let finalForecast: ForecastResponse | null = null;
@@ -291,7 +306,7 @@ const {
         // Call Hugging Face directly when configured; otherwise let the API route handle persistence.
         const spaceForecast = await fetchForecastFromSpace(
           FORECAST_SPACE_BASE,
-          payload
+          payloadForModel
         );
 
         try {
@@ -671,7 +686,7 @@ const {
               <label className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/80">
-                    {t("forecastForm.fields.cost")}
+                    {t("forecastForm.fields.cost", { currency: costCurrency })}
                   </span>
                   <span className="text-[10px] uppercase tracking-[0.25em] text-white/50">
                     {t("forecastForm.examples.cost")}

@@ -126,7 +126,7 @@ create table if not exists public.settings (
   display_name text,
   brand_name text not null,
   timezone text not null,
-  currency text not null default 'THB',
+  currency text not null default 'USD',
   language text not null default 'en',
   theme text not null default 'dark' check (theme in ('dark','light')),
   created_at timestamptz not null default public.utcnow(),
@@ -259,7 +259,7 @@ create policy "exports: authenticated access"
 
 -- SEED DATA ----------------------------------------------------------
 insert into public.settings (display_name, brand_name, timezone, currency, language)
-values ('Merch Ops', 'Demand Forecast', 'Asia/Bangkok', 'THB', 'en')
+values ('Merch Ops', 'Demand Forecast', 'Asia/Bangkok', 'USD', 'en')
 on conflict do nothing;
 
 insert into public.profiles (id, email)

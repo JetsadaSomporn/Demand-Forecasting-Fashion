@@ -13,6 +13,7 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase";
 import { callLlama } from "@/lib/llm";
+import { convertCurrencyToUsd, normalizeCurrencyCode } from "@/lib/currency";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -730,6 +731,8 @@ async function persistForecast(
   const supabaseReady = isSupabaseConfigured("service");
   const timestamp = new Date().toISOString();
   let forecastId = randomUUID();
+  const currency = normalizeCurrencyCode(payload.currency);
+  const productParams = { ...normalizedProduct, currency };
 
   if (supabaseReady) {
     try {
@@ -790,7 +793,8 @@ async function persistForecast(
       }
 
       const params = {
-        product: normalizedProduct,
+        product: productParams,
+        productCurrency: currency,
         model: result.model,
         salesCsvUrl: payload.salesCsvUrl ?? null,
         imageUrl: payload.imageUrl ?? null,
@@ -828,11 +832,12 @@ async function persistForecast(
     await fs.mkdir(LOCAL_FORECAST_DIR, { recursive: true });
     const record = {
       id: forecastId,
-      product: normalizedProduct,
+      product: productParams,
       model_name: result.model,
       horizon: result.horizon,
       params: {
-        product: normalizedProduct,
+        product: productParams,
+        productCurrency: currency,
         model: result.model,
         salesCsvUrl: payload.salesCsvUrl ?? null,
         imageUrl: payload.imageUrl ?? null,
@@ -925,6 +930,16 @@ export async function POST(request: Request) {
       normalizedProduct.cost = 1;
     }
 
+    const requestCurrency = normalizeCurrencyCode(parsed.currency);
+    const modelProduct = {
+      ...normalizedProduct,
+      cost: convertCurrencyToUsd(normalizedProduct.cost, requestCurrency),
+    };
+
+    if (modelProduct.cost <= 0) {
+      modelProduct.cost = 1;
+    }
+
     const csvNotes: string[] = [];
     const originalHasSalesHistory = Boolean(parsed.salesCsvUrl) || Boolean(parsed.salesCsvContent);
     let salesCsvContent = parsed.salesCsvContent ?? null;
@@ -967,9 +982,10 @@ export async function POST(request: Request) {
 
     const pythonPayload: ForecastRequest = {
       ...parsed,
+      currency: requestCurrency,
       model: resolvedModel,
-      product: normalizedProduct,
-      salesCsvContent: salesCsvContent,
+      product: modelProduct,
+      salesCsvContent,
     };
 
     const pythonResult =

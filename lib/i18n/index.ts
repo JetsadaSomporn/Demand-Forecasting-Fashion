@@ -168,7 +168,7 @@ export const dictionaries = {
         category: "Category",
         color: "Color",
         sizes: "Sizes",
-        cost: "Cost",
+        cost: "Cost in {{currency}}",
         firstSaleMonth: "First sale month",
       },
       placeholders: {
@@ -452,7 +452,7 @@ export const dictionaries = {
         category: "หมวดหมู่",
         color: "สี",
         sizes: "ไซส์",
-        cost: "ต้นทุน",
+        cost: "ต้นทุน ({{currency}})",
         firstSaleMonth: "เดือนที่เริ่มขาย",
       },
       placeholders: {

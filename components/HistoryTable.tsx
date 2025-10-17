@@ -6,6 +6,7 @@ import { Sparkles } from "lucide-react";
 import MinimalChart from "./MinimalChart";
 import type { ForecastDetail } from "@/lib/queries";
 import { useTranslation } from "@/lib/i18n/client";
+import { normalizeCurrencyCode } from "@/lib/currency";
 
 function formatLabel(value: string, locale: string) {
   if (!value) return value;
@@ -25,6 +26,7 @@ function formatLabel(value: string, locale: string) {
 type HistoryTableProps = {
   entries: ForecastDetail[];
   initialId?: string;
+  defaultCurrency?: string | null;
 };
 
 type InsightCacheEntry = {
@@ -33,9 +35,10 @@ type InsightCacheEntry = {
   timestamp: string | null;
 };
 
-export default function HistoryTable({ entries, initialId }: HistoryTableProps) {
+export default function HistoryTable({ entries, initialId, defaultCurrency }: HistoryTableProps) {
   const { t, language } = useTranslation();
   const locale = language === "th" ? "th-TH" : "en-US";
+  const fallbackCurrency = normalizeCurrencyCode(defaultCurrency);
   const dateTimeFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(locale, {
@@ -71,6 +74,7 @@ export default function HistoryTable({ entries, initialId }: HistoryTableProps) 
     defaultEntry?.summary_created_at ?? null
   );
   const [isInsightStreaming, setIsInsightStreaming] = useState(false);
+  const costCurrency = normalizeCurrencyCode(selected?.product?.currency ?? fallbackCurrency);
 
   useEffect(() => {
     if (!selected) {
@@ -310,10 +314,12 @@ export default function HistoryTable({ entries, initialId }: HistoryTableProps) 
                 </span>
               </div>
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/60">{t("history.detail.stats.cost")}:</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/60">
+                  {t("history.detail.stats.cost", { currency: costCurrency })}:
+                </span>
                 <span className="ml-2 font-semibold text-white">
                   {selected.product.cost != null
-                    ? numberFormatter.format(selected.product.cost)
+                    ? `${costCurrency} ${numberFormatter.format(selected.product.cost)}`
                     : "—"}
                 </span>
               </div>
