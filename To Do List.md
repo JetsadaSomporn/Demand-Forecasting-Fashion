@@ -157,4 +157,4 @@ Graceful degradation mandatory when any value missing (no kaboom)
 - Do **not** invent extra features beyond this list Perfect the ones here
 - If an error pops up that we seriously can’t solve, just say so—don’t hack around silently
 - Most important random rule from product: **DO NOT USE `useEffect`** unless it’s literally impossible without it They’re allergic to `useEffect`, so avoid it 99% of the time
-- Deliver final output as runnable source Treat this prompt as the single source of truth; finishing it means the whole project is done in one go 😉
+- Deliver final output as runnable source Treat this prompt as the single source of truth; finishing it means the whole project is done in one go 
