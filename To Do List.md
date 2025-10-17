@@ -1,6 +1,6 @@
 # full workspace rebuild brain dump (pls read all Do not try to skip) 
 
-Alright, we gotta ship the whole “Fashion Demand Forecast” thingy basically from zero Imagine the stakeholder is hovering behind us with coffee and a laser pointer Below is everything I scraped together; follow it like gospel even if some lines sound messy I didn’t have time to tidy the grammar, deal with it 🙏
+Alright, we gotta ship the whole “Fashion Demand Forecast” thingy basically from zero Imagine the stakeholder is hovering behind us with coffee and a laser pointer Below is everything I scraped together; follow it like gospel
 
 ## 0 vibe + product feel (don’t skip, sets the tone)
 - Glassmorphism everywhere: frosted glass panes, neon-ish gradients, cinematic vibes Think “fashion merch executive using a holographic dashboard at 1 AM”
