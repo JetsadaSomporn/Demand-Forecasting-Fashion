@@ -1,4 +1,4 @@
-# hey future-me / coding-buddy — full workspace rebuild brain dump (pls read all, sorry it’s long lol)
+# full workspace rebuild brain dump (pls read all Do not try to skip) 
 
 Alright, we gotta ship the whole “Fashion Demand Forecast” thingy basically from zero Imagine the stakeholder is hovering behind us with coffee and a laser pointer Below is everything I scraped together; follow it like gospel even if some lines sound messy I didn’t have time to tidy the grammar, deal with it 🙏
 
