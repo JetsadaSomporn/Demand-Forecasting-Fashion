@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { clsx } from "clsx";
 import { Sparkles } from "lucide-react";
 import MinimalChart from "./MinimalChart";
+import ForecastQuantityTable from "./ForecastQuantityTable";
 import type { ForecastDetail } from "@/lib/queries";
 import { useTranslation } from "@/lib/i18n/client";
 import { normalizeCurrencyCode } from "@/lib/currency";
@@ -75,6 +76,10 @@ export default function HistoryTable({ entries, initialId, defaultCurrency }: Hi
   );
   const [isInsightStreaming, setIsInsightStreaming] = useState(false);
   const costCurrency = normalizeCurrencyCode(selected?.product?.currency ?? fallbackCurrency);
+  const detailLabels = useMemo(() => {
+    if (!selected) return [];
+    return selected.months.map((month) => formatLabel(month, locale));
+  }, [selected, locale]);
 
   useEffect(() => {
     if (!selected) {
@@ -349,9 +354,16 @@ export default function HistoryTable({ entries, initialId, defaultCurrency }: Hi
           </div>
 
           <MinimalChart
-            labels={selected.months.map((month) => formatLabel(month, locale))}
+            labels={detailLabels}
             predicted={selected.y_pred}
             actual={selected.y_true ?? undefined}
+          />
+
+          <ForecastQuantityTable
+            labels={detailLabels}
+            predicted={selected.y_pred}
+            actual={selected.y_true ?? undefined}
+            numberFormatter={numberFormatter}
           />
 
           {selected.id ? (

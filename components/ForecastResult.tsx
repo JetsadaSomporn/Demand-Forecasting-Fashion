@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { clsx } from "clsx";
 import { Sparkles } from "lucide-react";
 import MinimalChart from "./MinimalChart";
+import ForecastQuantityTable from "./ForecastQuantityTable";
 import { useTranslation } from "@/lib/i18n/client";
 
 type ForecastResultData = {
@@ -164,42 +165,12 @@ export default function ForecastResult({
 
       <MinimalChart labels={labels} predicted={data.y_pred} actual={actualValues} />
 
-      <div className="overflow-hidden rounded-[28px] border border-white/20 bg-white/5">
-        <table className="w-full text-left text-sm text-white/80">
-          <thead className="bg-white/10">
-            <tr>
-              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.3em] text-white/60">
-                {t("forecastResult.table.month")}
-              </th>
-              <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.3em] text-white/60">
-                {t("forecastResult.table.forecastQty")}
-              </th>
-              {actualValues ? (
-                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.3em] text-white/60">
-                  {t("forecastResult.table.actualQty")}
-                </th>
-              ) : null}
-            </tr>
-          </thead>
-          <tbody>
-            {labels.map((label, idx) => (
-              <tr key={label} className="border-t border-white/10">
-                <td className="px-4 py-3 text-white/60">{label}</td>
-                <td className="px-4 py-3 font-semibold text-white">
-                  {numberFormatter.format(Math.round(data.y_pred[idx]))}
-                </td>
-                {actualValues ? (
-                  <td className="px-4 py-3 text-white/60">
-                    {actualValues[idx] != null
-                      ? numberFormatter.format(Math.round(actualValues[idx]!))
-                      : "—"}
-                  </td>
-                ) : null}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ForecastQuantityTable
+        labels={labels}
+        predicted={data.y_pred}
+        actual={actualValues}
+        numberFormatter={numberFormatter}
+      />
     </section>
   );
 }
