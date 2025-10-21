@@ -1,6 +1,7 @@
 # Fashion Demand Forecast Workspace
 
 Fashion Demand Forecast is a bilingual (English/Thai) workspace built for fashion merchandising teams who need cinematic-grade demand projections, streamlined collaboration, and resilient tooling that works online or offline. The platform blends a polished Next.js 14 experience with LightGBM inference, multimodal AI assistance, and Supabase-backed persistence.
+Demo Platform: https://demand-forecasting-fashion.vercel.app/
 
 ---
 
