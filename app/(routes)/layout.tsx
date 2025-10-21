@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { redirect } from "next/navigation";
 import { cache } from "react";
 import AppShell from "@/components/AppShell";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
@@ -24,37 +23,46 @@ export default async function RoutesLayout({
 }: {
   children: ReactNode;
 }) {
-
   const supabase = await createSupabaseServerClient();
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (!user || userError) {
-    redirect("/login");
-  }
+  let displayName: string | null = null;
 
-  // Use React cache - deduplicates queries within the same request
-  const profile = await getProfile(user.id);
+  if (user && !userError) {
+    // Use React cache - deduplicates queries within the same request
+    const profile = await getProfile(user.id);
 
-  const displayName =
-    profile?.display_name ??
-    (user.user_metadata?.full_name as string | undefined) ??
-    null;
+    displayName =
+      profile?.display_name ??
+      (user.user_metadata?.full_name as string | undefined) ??
+      null;
 
-  // Only insert if profile doesn't exist (no caching on insert)
-  if (!profile) {
-    await supabase.from("profiles").insert({
-      id: user.id,
-      email: user.email,
-      display_name: displayName,
-    });
+    // Only insert if profile doesn't exist (no caching on insert)
+    if (!profile) {
+      const { error: insertError } = await supabase.from("profiles").insert({
+        id: user.id,
+        email: user.email,
+        display_name: displayName,
+      });
+      if (insertError) {
+        console.warn("[RoutesLayout] Failed to seed profile", insertError);
+      }
+    }
   }
 
   return (
     <AppShell
-      user={{
-        email: user.email,
-        displayName,
-      }}
+      user={
+        user && !userError
+          ? {
+              email: user.email,
+              displayName,
+            }
+          : null
+      }
     >
       {children}
     </AppShell>

@@ -8,10 +8,10 @@ import { useTranslation } from "@/lib/i18n/client";
 
 type AppShellProps = {
   children: ReactNode;
-  user: {
+  user?: {
     email?: string | null;
     displayName?: string | null;
-  };
+  } | null;
 };
 
 export default function AppShell({ children, user }: AppShellProps) {
@@ -25,7 +25,11 @@ export default function AppShell({ children, user }: AppShellProps) {
     [t]
   );
 
-  const label = user.displayName || user.email || t("common.accountFallback");
+  const isAuthenticated = Boolean(user?.email || user?.displayName);
+
+  const label = isAuthenticated
+    ? user?.displayName || user?.email || t("common.accountFallback")
+    : t("common.guestLabel");
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-background via-surface/70 to-background text-foreground">
@@ -41,13 +45,23 @@ export default function AppShell({ children, user }: AppShellProps) {
             <span className="whitespace-nowrap text-[13px] text-foreground/80">
               {label}
             </span>
-            <Link
-              href="/logout"
-              prefetch={false}
-              className="text-[11px] uppercase tracking-[0.35em] text-foreground transition hover:text-accent"
-            >
-              {t("common.signOut")}
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                href="/logout"
+                prefetch={false}
+                className="text-[11px] uppercase tracking-[0.35em] text-foreground transition hover:text-accent"
+              >
+                {t("common.signOut")}
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                prefetch={false}
+                className="text-[11px] uppercase tracking-[0.35em] text-foreground transition hover:text-accent"
+              >
+                {t("common.signIn")}
+              </Link>
+            )}
           </div>
         </div>
         <div className="md:hidden bg-transparent px-6 pb-3 pt-2">

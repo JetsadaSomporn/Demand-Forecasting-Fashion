@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
@@ -133,9 +134,13 @@ export default function LoginForm() {
     <div className="flex min-h-screen w-full flex-col bg-background">
       <header className="fixed inset-x-0 top-0 z-40 bg-transparent px-6 py-5">
         <div className="mx-auto max-w-7xl">
-          <div className="font-display text-lg tracking-[0.4em] uppercase text-foreground">
+          <Link
+            href="/"
+            prefetch={false}
+            className="font-display text-lg tracking-[0.4em] uppercase text-foreground transition hover:text-foreground/80"
+          >
             {t("common.brand")}
-          </div>
+          </Link>
         </div>
       </header>
 

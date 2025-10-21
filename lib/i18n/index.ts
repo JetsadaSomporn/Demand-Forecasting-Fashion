@@ -6,8 +6,10 @@ export const dictionaries = {
     },
     common: {
       brand: "Forecast",
+      signIn: "Sign in",
       signOut: "Sign out",
       accountFallback: "Account",
+      guestLabel: "Guest preview",
       optional: "Optional",
       optionalDisplayName: "Optional display name",
       saved: "Saved",
@@ -120,6 +122,12 @@ export const dictionaries = {
         generic: "Sign in failed",
         noEmail: "Email is required",
       },
+    },
+    authRequired: {
+      title: "Sign in required",
+      historyDescription: "Sign in to unlock your saved forecasts, exports, and history timeline.",
+      settingsDescription: "Sign in to adjust workspace defaults like theme, currency, and timezone.",
+      cta: "Sign in to continue",
     },
     forecastForm: {
       heading: "Forecast",
@@ -290,8 +298,10 @@ export const dictionaries = {
     },
     common: {
       brand: "Forecast",
+      signIn: "เข้าสู่ระบบ",
       signOut: "ออกจากระบบ",
       accountFallback: "บัญชีผู้ใช้",
+      guestLabel: "โหมดทดลอง",
       optional: "ไม่บังคับ",
       optionalDisplayName: "ชื่อแสดงผล (ไม่บังคับ)",
       saved: "บันทึกแล้ว",
@@ -404,6 +414,12 @@ export const dictionaries = {
         generic: "เข้าสู่ระบบไม่สำเร็จ",
         noEmail: "กรุณากรอกอีเมล",
       },
+    },
+    authRequired: {
+      title: "ต้องเข้าสู่ระบบ",
+      historyDescription: "ล็อกอินเพื่อดูประวัติการพยากรณ์ ผลลัพธ์ที่บันทึกไว้ และไฟล์ที่ดาวน์โหลดได้.",
+      settingsDescription: "ล็อกอินเพื่อปรับการตั้งค่าพื้นฐานของ workspace เช่น ธีม สกุลเงิน และโซนเวลา.",
+      cta: "เข้าสู่ระบบเพื่อดำเนินการต่อ",
     },
     forecastForm: {
       heading: "คาดการณ์",

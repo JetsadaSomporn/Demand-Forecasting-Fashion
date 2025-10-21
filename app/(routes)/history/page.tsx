@@ -1,7 +1,9 @@
 import HistoryTable from "@/components/HistoryTable";
+import LoginRequiredNotice from "@/components/LoginRequiredNotice";
 import { getForecastHistory, getSettingsDefaults } from "@/lib/queries";
 import { cardClassName, headingClassName, subtleTextClassName } from "@/lib/theme";
 import { getServerTranslator } from "@/lib/i18n/server";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 type HistoryPageProps = {
   searchParams?: Promise<{
@@ -17,9 +19,25 @@ export const metadata = {
 export const revalidate = 120;
 
 export default async function HistoryPage({ searchParams }: HistoryPageProps) {
+  const { t } = await getServerTranslator();
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (!user || userError) {
+    return (
+      <LoginRequiredNotice
+        title={t("authRequired.title")}
+        description={t("authRequired.historyDescription")}
+        actionLabel={t("authRequired.cta")}
+      />
+    );
+  }
+
   const [history, settings] = await Promise.all([getForecastHistory(), getSettingsDefaults()]);
   const params = await searchParams;
-  const { t } = await getServerTranslator();
 
   if (!history.length) {
     return (
