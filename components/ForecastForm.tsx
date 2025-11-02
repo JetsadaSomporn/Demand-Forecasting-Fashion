@@ -353,7 +353,9 @@ const {
         throw new Error(t("forecastForm.errors.forecastFailed"));
       }
 
-      setForecastResult(finalForecast);
+      const displayModel = csv ? "lgbm_full" : finalForecast.model;
+
+      setForecastResult({ ...finalForecast, model: displayModel });
       setStatusMessage(finalStatusMessage);
     } catch (error) {
       console.error(error);
