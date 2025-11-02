@@ -403,17 +403,17 @@ const {
       
       const json = await response.json();
       if (json?.category) {
-        setValue("product.category", json.category, { shouldValidate: true });
+        setValue("product.category", json.category, { shouldValidate: true, shouldDirty: true });
       }
       if (json?.color) {
-        setValue("product.color", json.color, { shouldValidate: true });
+        setValue("product.color", json.color, { shouldValidate: true, shouldDirty: true });
         setColorWarning(t("forecastForm.warnings.colorAiUncertain"));
       }
       if (json?.sizes) {
-        setValue("product.sizes", json.sizes, { shouldValidate: true });
+        setValue("product.sizes", json.sizes, { shouldValidate: true, shouldDirty: true });
       }
       if (json?.style) {
-        setValue("product.title", json.style, { shouldDirty: false });
+        setValue("product.title", json.style, { shouldValidate: true, shouldDirty: true });
       }
       setStatusMessage(t("forecastForm.status.metadataExtracted"));
     } catch (error) {

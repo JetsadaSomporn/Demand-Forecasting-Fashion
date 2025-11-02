@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { Buffer } from "node:buffer";
-import { randomUUID } from "node:crypto";
 import { imageExtractSchema } from "@/lib/validators";
-import { createSupabaseServiceClient, isSupabaseConfigured } from "@/lib/supabase";
 
 const COLOR_KEYWORDS: Record<string, string[]> = {
   Black: ["black", "noir", "ebony", "ink", "jet"],
@@ -38,11 +36,7 @@ COLOR_ALIASES.MULTICOLOR = "MULTICOLOR";
 
 const DEFAULT_COLOR = "BLACK";
 
-const QWEN_API_URL = "https://router.huggingface.co/v1/chat/completions";
-const QWEN_MODEL = "Qwen/Qwen2.5-VL-7B-Instruct:hyperbolic";
-const SUPABASE_IMAGE_BUCKET =
-  process.env.SUPABASE_IMAGE_BUCKET || "product-images";
-const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1 hour window for Qwen to fetch the asset
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
 const DATA_URL_REGEX =
   /^data:(image\/[a-z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/i;
 
@@ -103,62 +97,60 @@ function normalizeColor(input: string | null | undefined) {
   return DEFAULT_COLOR;
 }
 
-async function resolveImageForQwen(source: string) {
-  if (!source.startsWith("data:")) {
-    return source;
+async function prepareImageForGemini(source: string) {
+  if (!source) {
+    throw new Error("No image source provided for Gemini analysis.");
   }
 
-  const match = DATA_URL_REGEX.exec(source);
-  if (!match?.[1] || !match?.[2]) {
-    throw new Error("Invalid data URL provided for image analysis.");
+  const trimmedSource = source.trim();
+
+  // Handle data URL (base64)
+  if (trimmedSource.startsWith("data:")) {
+    const match = DATA_URL_REGEX.exec(trimmedSource);
+    if (!match?.[1] || !match?.[2]) {
+      throw new Error("Invalid data URL provided for image analysis.");
+    }
+
+    const mime = match[1];
+    const base64 = match[2];
+    const extension = extensionFromMime(mime);
+    if (!extension) {
+      throw new Error(`Unsupported image MIME type: ${mime}`);
+    }
+
+    return { mimeType: mime, base64Data: base64 };
   }
 
-  if (!isSupabaseConfigured("service")) {
+  // Handle remote URL - fetch and convert to base64
+  try {
+    if (!/^https?:\/\//i.test(trimmedSource)) {
+      throw new Error("Unsupported image source format provided.");
+    }
+
+    const response = await fetch(trimmedSource);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image (${response.status} ${response.statusText})`);
+    }
+
+    const contentType = response.headers.get("content-type")?.split(";")[0]?.trim() || "image/jpeg";
+    if (!extensionFromMime(contentType)) {
+      throw new Error(`Unsupported image MIME type: ${contentType}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    return {
+      mimeType: contentType,
+      base64Data: buffer.toString("base64"),
+    };
+  } catch (error) {
     throw new Error(
-      "Received data URL image but Supabase service credentials are missing. Unable to upload image for Qwen."
+      error instanceof Error
+        ? `Unable to fetch image for Gemini analysis: ${error.message}`
+        : "Unable to fetch image for Gemini analysis"
     );
   }
-
-  const mime = match[1];
-  const payload = match[2];
-  const extension = extensionFromMime(mime);
-  if (!extension) {
-    throw new Error(`Unsupported image MIME type: ${mime}`);
-  }
-
-  const buffer = Buffer.from(payload, "base64");
-  const objectKey = `qwen-extract/${randomUUID()}.${extension}`;
-
-  const supabase = createSupabaseServiceClient();
-  const bucket = supabase.storage.from(SUPABASE_IMAGE_BUCKET);
-
-  const upload = await bucket.upload(objectKey, buffer, {
-    cacheControl: "300",
-    contentType: mime,
-    upsert: true,
-  });
-
-  if (upload.error) {
-    throw new Error(
-      `Failed to upload inline image for Qwen: ${
-        upload.error.message || "Unknown Supabase error"
-      }`
-    );
-  }
-
-  const { data: signedData, error: signedError } = await bucket.createSignedUrl(
-    objectKey,
-    SIGNED_URL_TTL_SECONDS
-  );
-
-  if (signedError || !signedData?.signedUrl) {
-    throw new Error(
-      signedError?.message ||
-        "Unable to create signed URL for uploaded image asset."
-    );
-  }
-
-  return signedData.signedUrl;
 }
 
 function heuristicFromFilename(source: string | null | undefined) {
@@ -207,28 +199,40 @@ function heuristicFromFilename(source: string | null | undefined) {
   };
 }
 
-async function analyzeImageWithQwen(imageUrl: string) {
-  const hfToken = process.env.HF_TOKEN;
-
-  if (!hfToken) {
-    throw new Error("HF_TOKEN environment variable is required");
+async function analyzeImageWithGemini(
+  image: { mimeType: string; base64Data: string },
+  apiKey: string
+) {
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY environment variable is required");
   }
 
-  const payload = {
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: `Analyze this fashion item image and extract the following information:
+  const prompt = `Analyze this fashion item image carefully and extract the following information:
 
 1. **Category**: Classify as one of:
    - "Feminine" (women's clothing, dresses, skirts, feminine styles)
    - "Masculine" (men's clothing, suits, masculine styles)
    - "Children" (kids' clothing)
 
-2. **Color**: Primary color (one word). Choose from: BLACK, WHITE, BLUE, RED, GREEN, PINK, PURPLE, BEIGE, GRAY, BROWN, or closest match.
+2. **Color**: Identify the PRIMARY/DOMINANT color of the garment. Be precise and choose ONE color from this list:
+   - YELLOW (for bright yellow, golden yellow, mustard)
+   - ORANGE (for orange, tangerine, coral)
+   - RED (for red, crimson, scarlet)
+   - PINK (for pink, rose, magenta)
+   - PURPLE (for purple, violet, lavender)
+   - BLUE (for blue, navy, azure, denim)
+   - GREEN (for green, emerald, olive, mint)
+   - BROWN (for dark brown, chocolate, coffee - NOT for yellow or tan)
+   - BEIGE (for beige, tan, sand, cream, khaki - light neutral tones)
+   - GRAY (for gray, silver, charcoal)
+   - BLACK (for black, dark tones)
+   - WHITE (for white, off-white, ivory)
+   
+   IMPORTANT: 
+   - If it's bright YELLOW, answer "YELLOW" not BROWN or BEIGE
+   - If it's light TAN or CREAM, answer "BEIGE" not BROWN
+   - Only use BROWN for actual dark brown colors
+   - Focus on the MAIN color, ignore small patterns or accents
 
 3. **Sizes**: Available sizes in pipe-separated format. Common patterns:
    - "S|M|L|XL" (standard)
@@ -237,50 +241,81 @@ async function analyzeImageWithQwen(imageUrl: string) {
    - "S|M|L" (basic)
    If unclear, use "S|M|L|XL" as default.
 
-4. **Style**: Brief description of the item (e.g., "Basic Tee", "Casual Dress", "Formal Shirt")
+4. **Style**: Provide a specific, descriptive product title that accurately describes the garment. Include:
+   - Garment type (T-shirt, Dress, Jacket, Pants, Skirt, Sweater, etc.)
+   - Key style features (Casual, Formal, Vintage, Modern, Oversized, Fitted, etc.)
+   - Notable details (V-neck, Button-down, Striped, Pleated, Hooded, etc.)
+   
+   Examples:
+   - "Casual Cotton T-Shirt"
+   - "Formal Button-Down Shirt"
+   - "Vintage Denim Jacket"
+   - "Pleated Mini Skirt"
+   - "Oversized Hoodie Sweater"
+   - "Fitted Pencil Dress"
+   - "Striped Long-Sleeve Tee"
+   
+   Be SPECIFIC and DESCRIPTIVE. Don't use vague terms like "Basic Tee" or "Fashion item".
 
 Respond ONLY with valid JSON in this exact format:
 {
   "category": "Feminine",
-  "color": "BLACK",
+  "color": "YELLOW",
   "sizes": "S|M|L|XL",
-  "style": "Basic Tee"
-}`
-          },
+  "style": "Casual Cotton T-Shirt"
+}`;
+
+  const payload = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { text: prompt },
           {
-            type: "image_url",
-            image_url: {
-              url: imageUrl
-            }
-          }
-        ]
-      }
+            inline_data: {
+              mime_type: image.mimeType,
+              data: image.base64Data,
+            },
+          },
+        ],
+      },
     ],
-    model: QWEN_MODEL,
-    max_tokens: 300,
-    temperature: 0.1
+    generationConfig: {
+      temperature: 0.2,
+      maxOutputTokens: 400,
+    },
   };
 
-  const response = await fetch(QWEN_API_URL, {
+  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${hfToken}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
   });
 
-  if (!response.ok) {
-    throw new Error(`Qwen API error: ${response.status} ${response.statusText}`);
-  }
-
   const data = await response.json();
-  
-  if (!data.choices?.[0]?.message?.content) {
-    throw new Error("Invalid response from Qwen API");
+
+  if (!response.ok) {
+    const errorMessage =
+      data?.error?.message || `${response.status} ${response.statusText}`;
+    throw new Error(`Gemini API error: ${errorMessage}`);
   }
 
-  const content = data.choices[0].message.content;
+  const parts = data?.candidates?.[0]?.content?.parts;
+  const content =
+    Array.isArray(parts)
+      ? parts
+          .map((part: { text?: string }) => part?.text || "")
+          .join("")
+          .trim()
+      : "";
+
+  if (!content) {
+    throw new Error("Invalid response from Gemini API");
+  }
+
+  const contentText = content;
   
   try {
     const parsed = JSON.parse(content);
@@ -324,8 +359,13 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const payload = imageExtractSchema.parse(body);
-    const hfToken = process.env.HF_TOKEN;
-    if (!hfToken) {
+    const geminiKey = process.env.GEMINI_API_KEY;
+    
+    console.log("[extract-meta] GEMINI_API_KEY present?", Boolean(geminiKey));
+    console.log("[extract-meta] Image source:", payload.imageUrl ? "URL" : payload.imageBase64 ? "base64" : "none");
+    
+    if (!geminiKey) {
+      console.warn("[extract-meta] GEMINI_API_KEY missing, using heuristic");
       const heuristic = heuristicFromFilename(payload.imageUrl ?? null);
       return NextResponse.json({
         category: heuristic.category,
@@ -333,7 +373,7 @@ export async function POST(request: Request) {
         sizes: heuristic.sizes,
         style: heuristic.style,
         confidence: heuristic.confidence,
-        warning: "HF_TOKEN missing – using heuristic guess.",
+        warning: "GEMINI_API_KEY missing – using heuristic guess.",
         raw_json: { hint: heuristic.hint },
       });
     }
@@ -358,9 +398,13 @@ export async function POST(request: Request) {
         throw new Error("No image URL or base64 data provided");
       }
 
-      const resolvedImageUrl = await resolveImageForQwen(imageSource);
+      console.log("[extract-meta] Preparing image for Gemini...");
+      const preparedImage = await prepareImageForGemini(imageSource);
+      console.log("[extract-meta] Image prepared, mime:", preparedImage.mimeType);
 
-      const result = await analyzeImageWithQwen(resolvedImageUrl);
+      console.log("[extract-meta] Calling Gemini API...");
+      const result = await analyzeImageWithGemini(preparedImage, geminiKey);
+      console.log("[extract-meta] Gemini response received:", result);
 
       return NextResponse.json({
         category: result.category,
@@ -368,11 +412,11 @@ export async function POST(request: Request) {
         sizes: result.sizes,
         style: result.style,
         confidence: result.confidence,
-        raw_json: { qwen_response: result.raw_response },
+        raw_json: { gemini_response: result.raw_response },
       });
 
-    } catch (qwenError) {
-      console.error("Qwen API error:", qwenError);
+    } catch (geminiError) {
+      console.error("[extract-meta] Gemini API error:", geminiError);
       
       const heuristic = heuristicFromFilename(payload.imageUrl ?? null);
       return NextResponse.json({
@@ -381,8 +425,8 @@ export async function POST(request: Request) {
         sizes: heuristic.sizes,
         style: heuristic.style,
         confidence: heuristic.confidence,
-        warning: `Qwen API failed: ${qwenError instanceof Error ? qwenError.message : 'Unknown error'} – using heuristic fallback.`,
-        raw_json: { error: qwenError instanceof Error ? qwenError.message : 'Unknown error' },
+        warning: `Gemini API failed: ${geminiError instanceof Error ? geminiError.message : 'Unknown error'} – using heuristic fallback.`,
+        raw_json: { error: geminiError instanceof Error ? geminiError.message : 'Unknown error' },
       });
     }
 

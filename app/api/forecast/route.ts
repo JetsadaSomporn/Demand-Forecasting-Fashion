@@ -873,18 +873,20 @@ export async function POST(request: Request) {
     const requestLanguage: SupportedLanguage = parsed.language === "th" ? "th" : "en";
     const productWithThaiNormalization = translateThaiProduct(parsed.product);
 
-    const validation = await validateWithLlama(productWithThaiNormalization);
+    // DISABLED: LLM validation was returning cached/wrong values
+    // const validation = await validateWithLlama(productWithThaiNormalization);
     
     let productToUse = { ...productWithThaiNormalization };
     
-    if (validation.correctedProduct) {
-      productToUse = {
-        ...productToUse,
-        ...validation.correctedProduct,
-      };
-    } else {
-      
-      productToUse.category = (productToUse.category || "").toString().toUpperCase().trim();
+    // DISABLED: Skip LLM correction to use form values directly
+    // if (validation.correctedProduct) {
+    //   productToUse = {
+    //     ...productToUse,
+    //     ...validation.correctedProduct,
+    //   };
+    // } else {
+    
+    productToUse.category = (productToUse.category || "").toString().toUpperCase().trim();
       productToUse.color = (productToUse.color || "").toString().toUpperCase().trim();
       productToUse.sizes = (productToUse.sizes || "").toString().toUpperCase().trim();
       
@@ -914,7 +916,7 @@ export async function POST(request: Request) {
       if (categoryMap[productToUse.category]) {
         productToUse.category = categoryMap[productToUse.category];
       }
-    }
+    // }  // REMOVED: end of else block (LLM validation disabled)
 
     const normalizedProduct = {
       ...productToUse,
