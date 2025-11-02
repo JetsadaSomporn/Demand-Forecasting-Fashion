@@ -314,8 +314,6 @@ Respond ONLY with valid JSON in this exact format:
   if (!content) {
     throw new Error("Invalid response from Gemini API");
   }
-
-  const contentText = content;
   
   try {
     const parsed = JSON.parse(content);

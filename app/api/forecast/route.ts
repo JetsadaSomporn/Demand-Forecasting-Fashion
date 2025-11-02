@@ -206,41 +206,6 @@ function translateThaiProduct(product: ForecastRequest["product"]) {
   };
 }
 
-async function validateWithLlama(product: ForecastRequest["product"]): Promise<{ correctedProduct: Record<string, string> | null }> {
-  const prompt = `Map to valid values. All values must be UPPERCASE.
-
-VALID CATEGORIES: FEMININE, MASCULINE, CHILDREN
-Map: women/woman/female/ladies/girls → FEMININE
-Map: men/man/male/boys/menswear → MASCULINE
-Map: kids/kid/child/children/baby/toddler → CHILDREN
-
-COLORS: BLACK, WHITE, BLUE, RED, GREEN, PINK, PURPLE, BEIGE, GRAY, BROWN (uppercase)
-SIZES: Keep format with pipes, uppercase (e.g., S|M|L)
-
-Input: Category="${product.category}", Color="${product.color}", Sizes="${product.sizes}"
-
-JSON only:
-{"category":"MASCULINE","color":"RED","sizes":"S|M|L"}`;
-
-  const content = await callLlama(prompt, { maxTokens: 120 });
-  if (!content) {
-    return { correctedProduct: null };
-  }
-
-  try {
-    const jsonMatch = content.match(/\{[\s\S]*?\}/);
-    if (!jsonMatch) {
-      console.error("[LLM] No JSON found in content");
-      return { correctedProduct: null };
-    }
-    const parsed = JSON.parse(jsonMatch[0]);
-    return { correctedProduct: parsed };
-  } catch (error) {
-    console.error("[LLM] Validation error:", error);
-    return { correctedProduct: null };
-  }
-}
-
 type CsvParseResult = {
   headers: string[];
   rows: string[][];
@@ -876,47 +841,39 @@ export async function POST(request: Request) {
     // DISABLED: LLM validation was returning cached/wrong values
     // const validation = await validateWithLlama(productWithThaiNormalization);
     
-    let productToUse = { ...productWithThaiNormalization };
+    // Normalize product values directly without LLM validation
+    const categoryMap: Record<string, string> = {
+      "CHILD": "CHILDREN",
+      "KIDS": "CHILDREN",
+      "KID": "CHILDREN",
+      "BABY": "CHILDREN",
+      "TODDLER": "CHILDREN",
+      "MEN": "MASCULINE",
+      "MENS": "MASCULINE",
+      "MALE": "MASCULINE",
+      "MAN": "MASCULINE",
+      "MENSWEAR": "MASCULINE",
+      "BOYS": "MASCULINE",
+      "WOMEN": "FEMININE",
+      "WOMENS": "FEMININE",
+      "FEMALE": "FEMININE",
+      "WOMAN": "FEMININE",
+      "LADIES": "FEMININE",
+      "GIRLS": "FEMININE",
+      "MUSCULINE": "MASCULINE",
+      "MASCULIN": "MASCULINE",
+      "FEMININ": "FEMININE",
+    };
     
-    // DISABLED: Skip LLM correction to use form values directly
-    // if (validation.correctedProduct) {
-    //   productToUse = {
-    //     ...productToUse,
-    //     ...validation.correctedProduct,
-    //   };
-    // } else {
+    const upperCategory = (productWithThaiNormalization.category || "").toString().toUpperCase().trim();
+    const mappedCategory = categoryMap[upperCategory] || upperCategory;
     
-    productToUse.category = (productToUse.category || "").toString().toUpperCase().trim();
-      productToUse.color = (productToUse.color || "").toString().toUpperCase().trim();
-      productToUse.sizes = (productToUse.sizes || "").toString().toUpperCase().trim();
-      
-      const categoryMap: Record<string, string> = {
-        "CHILD": "CHILDREN",
-        "KIDS": "CHILDREN",
-        "KID": "CHILDREN",
-        "BABY": "CHILDREN",
-        "TODDLER": "CHILDREN",
-        "MEN": "MASCULINE",
-        "MENS": "MASCULINE",
-        "MALE": "MASCULINE",
-        "MAN": "MASCULINE",
-        "MENSWEAR": "MASCULINE",
-        "BOYS": "MASCULINE",
-        "WOMEN": "FEMININE",
-        "WOMENS": "FEMININE",
-        "FEMALE": "FEMININE",
-        "WOMAN": "FEMININE",
-        "LADIES": "FEMININE",
-        "GIRLS": "FEMININE",
-        "MUSCULINE": "MASCULINE",
-        "MASCULIN": "MASCULINE",
-        "FEMININ": "FEMININE",
-      };
-      
-      if (categoryMap[productToUse.category]) {
-        productToUse.category = categoryMap[productToUse.category];
-      }
-    // }  // REMOVED: end of else block (LLM validation disabled)
+    const productToUse = {
+      ...productWithThaiNormalization,
+      category: mappedCategory,
+      color: (productWithThaiNormalization.color || "").toString().toUpperCase().trim(),
+      sizes: (productWithThaiNormalization.sizes || "").toString().toUpperCase().trim(),
+    };
 
     const normalizedProduct = {
       ...productToUse,
