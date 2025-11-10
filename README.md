@@ -11,7 +11,7 @@ Fashion Demand Forecast is a bilingual (English/Thai) workspace built for fashio
 
 - Storytelling-ready forecasts with glassmorphism-inspired UI, real-time charting, AI-generated insights, and bilingual copy throughout the workflow.
 - Adaptive modelling with automatic switching between historical and metadata LightGBM pipelines based on uploaded sales history.
-- Human-in-the-loop AI using NVIDIA Llama 3.3 for CSV mapping and insights, and Gemini 2.0 Flash for image metadata extraction.
+- Human-in-the-loop AI using NVIDIA Llama 3.3 for CSV mapping and insights, and Qwen 2.5-VL for image metadata extraction.
 - Offline-friendly operations with JSON-based fallbacks in `.data/` ensure forecasting, history, and settings persist even without Supabase credentials.
 - Secure, scalable foundation where Supabase handles auth, storage, and Postgres; optional Hugging Face Space keeps long-running inference outside Vercel limits.
 - Currency-aware cost handling where costs are captured in any configured currency and converted to USD before modelling to match training data.
@@ -26,7 +26,7 @@ Fashion Demand Forecast is a bilingual (English/Thai) workspace built for fashio
 | Client providers | Theme and i18n contexts | `lib/theme/client.tsx` and `lib/i18n/client.tsx` keep UI synchronized with user settings and language selection. |
 | Supabase | Auth, Postgres persistence, storage buckets | Email OTP + Google OAuth. Buckets: `product-images` (public), `exports` (protected). |
 | Python inference service | LightGBM modelling | FastAPI/Flask app living beside Next.js or on Hugging Face Space. Receives normalized `ForecastRequest` payloads. |
-| AI integrations | CSV & form intelligence, insights, metadata | NVIDIA APIs and Google Gemini. Optional direct Hugging Face Space call using `NEXT_PUBLIC_FORECAST_SERVICE_URL`. |
+| AI integrations | CSV & form intelligence, insights, metadata | NVIDIA Llama 3.3 for insights and Qwen 2.5-VL via Hugging Face Router for image analysis. Optional direct Hugging Face Space call using `NEXT_PUBLIC_FORECAST_SERVICE_URL`. |
 | Offline data store | `.data/settings.json`, `.data/forecasts/*.json` | Mirrors Supabase schema for local development or outage scenarios. |
 
 ---
@@ -76,7 +76,7 @@ Fashion Demand Forecast is a bilingual (English/Thai) workspace built for fashio
 | `FORECAST_SERVICE_URL` | Internal Python forecasting endpoint (FastAPI/Flask) |
 | `FORECAST_SERVICE_TOKEN` | Optional bearer token for the forecasting service |
 | `NEXT_PUBLIC_FORECAST_SERVICE_URL` | Optional Hugging Face Space queue URL to bypass Vercel timeouts |
-| `GEMINI_API_KEY` | Google Gemini API key for image metadata extraction |
+| `HF_TOKEN` | Hugging Face API token for Qwen 2.5-VL image analysis via Router |
 | `NVIDIA_API_KEY` | Access key for NVIDIA Llama services |
 
 Unset variables trigger graceful degradation—offline forecasts are still possible using `.data/` fallbacks.

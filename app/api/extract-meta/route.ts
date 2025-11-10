@@ -36,7 +36,7 @@ COLOR_ALIASES.MULTICOLOR = "MULTICOLOR";
 
 const DEFAULT_COLOR = "BLACK";
 
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
+const HF_ROUTER_URL = "https://router.huggingface.co/v1/chat/completions";
 const DATA_URL_REGEX =
   /^data:(image\/[a-z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/i;
 
@@ -97,60 +97,78 @@ function normalizeColor(input: string | null | undefined) {
   return DEFAULT_COLOR;
 }
 
-async function prepareImageForGemini(source: string) {
-  if (!source) {
-    throw new Error("No image source provided for Gemini analysis.");
-  }
-
-  const trimmedSource = source.trim();
-
-  // Handle data URL (base64)
-  if (trimmedSource.startsWith("data:")) {
-    const match = DATA_URL_REGEX.exec(trimmedSource);
+async function compressBase64Image(dataUrl: string, maxSizeKB = 100): Promise<string> {
+  try {
+    // Extract base64 data and mime type
+    const match = DATA_URL_REGEX.exec(dataUrl);
     if (!match?.[1] || !match?.[2]) {
-      throw new Error("Invalid data URL provided for image analysis.");
+      return dataUrl; // Return original if can't parse
     }
 
     const mime = match[1];
     const base64 = match[2];
-    const extension = extensionFromMime(mime);
-    if (!extension) {
-      throw new Error(`Unsupported image MIME type: ${mime}`);
+    
+    // Check current size
+    const currentSizeKB = (base64.length * 3) / 4 / 1024;
+    
+    if (currentSizeKB <= maxSizeKB) {
+      return dataUrl; // Already small enough
     }
 
-    return { mimeType: mime, base64Data: base64 };
-  }
-
-  // Handle remote URL - fetch and convert to base64
-  try {
-    if (!/^https?:\/\//i.test(trimmedSource)) {
-      throw new Error("Unsupported image source format provided.");
+    // Convert base64 to buffer
+    const buffer = Buffer.from(base64, 'base64');
+    
+    // Use sharp to resize and compress (if available)
+    const sharp = await import('sharp').catch(() => null);
+    
+    if (!sharp) {
+      return dataUrl;
     }
 
-    const response = await fetch(trimmedSource);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch image (${response.status} ${response.statusText})`);
+    let quality = 80;
+    let width = 1024; // Max width
+    let compressed = await sharp.default(buffer)
+      .resize(width, null, { withoutEnlargement: true, fit: 'inside' })
+      .jpeg({ quality })
+      .toBuffer();
+
+    // Iteratively reduce quality if still too large
+    while ((compressed.length * 3) / 4 / 1024 > maxSizeKB && quality > 20) {
+      quality -= 10;
+      width = Math.floor(width * 0.8);
+      compressed = await sharp.default(buffer)
+        .resize(width, null, { withoutEnlargement: true, fit: 'inside' })
+        .jpeg({ quality })
+        .toBuffer();
     }
 
-    const contentType = response.headers.get("content-type")?.split(";")[0]?.trim() || "image/jpeg";
-    if (!extensionFromMime(contentType)) {
-      throw new Error(`Unsupported image MIME type: ${contentType}`);
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    return {
-      mimeType: contentType,
-      base64Data: buffer.toString("base64"),
-    };
+    const compressedBase64 = compressed.toString('base64');
+    return `data:image/jpeg;base64,${compressedBase64}`;
   } catch (error) {
-    throw new Error(
-      error instanceof Error
-        ? `Unable to fetch image for Gemini analysis: ${error.message}`
-        : "Unable to fetch image for Gemini analysis"
-    );
+    console.error('[compress] Error compressing image:', error);
+    return dataUrl; // Return original on error
   }
+}
+
+async function prepareImageForQwen(source: string) {
+  if (!source) {
+    throw new Error("No image source provided for Qwen analysis.");
+  }
+
+  const trimmedSource = source.trim();
+
+  // Handle data URL (base64) - compress before sending
+  if (trimmedSource.startsWith("data:")) {
+    const compressed = await compressBase64Image(trimmedSource, 100); // Max 100KB
+    return compressed;
+  }
+
+  // Handle remote URL - Qwen can use URLs directly
+  if (/^https?:\/\//i.test(trimmedSource)) {
+    return trimmedSource;
+  }
+
+  throw new Error("Unsupported image source format provided.");
 }
 
 function heuristicFromFilename(source: string | null | undefined) {
@@ -199,12 +217,12 @@ function heuristicFromFilename(source: string | null | undefined) {
   };
 }
 
-async function analyzeImageWithGemini(
-  image: { mimeType: string; base64Data: string },
+async function analyzeImageWithQwen(
+  imageUrl: string,
   apiKey: string
 ) {
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY environment variable is required");
+    throw new Error("HF_TOKEN environment variable is required");
   }
 
   const prompt = `Analyze this fashion item image carefully and extract the following information:
@@ -266,29 +284,32 @@ Respond ONLY with valid JSON in this exact format:
 }`;
 
   const payload = {
-    contents: [
+    model: "Qwen/Qwen2.5-VL-7B-Instruct:hyperbolic",
+    messages: [
       {
         role: "user",
-        parts: [
-          { text: prompt },
+        content: [
           {
-            inline_data: {
-              mime_type: image.mimeType,
-              data: image.base64Data,
+            type: "text",
+            text: prompt,
+          },
+          {
+            type: "image_url",
+            image_url: {
+              url: imageUrl,
             },
           },
         ],
       },
     ],
-    generationConfig: {
-      temperature: 0.2,
-      maxOutputTokens: 400,
-    },
+    temperature: 0.2,
+    max_tokens: 400,
   };
 
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+  const response = await fetch(HF_ROUTER_URL, {
     method: "POST",
     headers: {
+      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -299,20 +320,13 @@ Respond ONLY with valid JSON in this exact format:
   if (!response.ok) {
     const errorMessage =
       data?.error?.message || `${response.status} ${response.statusText}`;
-    throw new Error(`Gemini API error: ${errorMessage}`);
+    throw new Error(`Qwen API error: ${errorMessage}`);
   }
 
-  const parts = data?.candidates?.[0]?.content?.parts;
-  const content =
-    Array.isArray(parts)
-      ? parts
-          .map((part: { text?: string }) => part?.text || "")
-          .join("")
-          .trim()
-      : "";
+  const content = data?.choices?.[0]?.message?.content?.trim() || "";
 
   if (!content) {
-    throw new Error("Invalid response from Gemini API");
+    throw new Error("Invalid response from Qwen API");
   }
   
   try {
@@ -353,30 +367,14 @@ Respond ONLY with valid JSON in this exact format:
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
+    const body = await req.json();
     const payload = imageExtractSchema.parse(body);
-    const geminiKey = process.env.GEMINI_API_KEY;
-    
-    console.log("[extract-meta] GEMINI_API_KEY present?", Boolean(geminiKey));
-    console.log("[extract-meta] Image source:", payload.imageUrl ? "URL" : payload.imageBase64 ? "base64" : "none");
-    
-    if (!geminiKey) {
-      console.warn("[extract-meta] GEMINI_API_KEY missing, using heuristic");
-      const heuristic = heuristicFromFilename(payload.imageUrl ?? null);
-      return NextResponse.json({
-        category: heuristic.category,
-        color: heuristic.color,
-        sizes: heuristic.sizes,
-        style: heuristic.style,
-        confidence: heuristic.confidence,
-        warning: "GEMINI_API_KEY missing – using heuristic guess.",
-        raw_json: { hint: heuristic.hint },
-      });
-    }
 
-    if (!payload.imageUrl && !payload.imageBase64) {
+    const hfToken = process.env.HF_TOKEN;
+
+    if (!hfToken) {
       const heuristic = heuristicFromFilename(null);
       return NextResponse.json({
         category: heuristic.category,
@@ -396,13 +394,8 @@ export async function POST(request: Request) {
         throw new Error("No image URL or base64 data provided");
       }
 
-      console.log("[extract-meta] Preparing image for Gemini...");
-      const preparedImage = await prepareImageForGemini(imageSource);
-      console.log("[extract-meta] Image prepared, mime:", preparedImage.mimeType);
-
-      console.log("[extract-meta] Calling Gemini API...");
-      const result = await analyzeImageWithGemini(preparedImage, geminiKey);
-      console.log("[extract-meta] Gemini response received:", result);
+      const preparedImageUrl = await prepareImageForQwen(imageSource);
+      const result = await analyzeImageWithQwen(preparedImageUrl, hfToken);
 
       return NextResponse.json({
         category: result.category,
@@ -410,11 +403,11 @@ export async function POST(request: Request) {
         sizes: result.sizes,
         style: result.style,
         confidence: result.confidence,
-        raw_json: { gemini_response: result.raw_response },
+        raw_json: { qwen_response: result.raw_response },
       });
 
-    } catch (geminiError) {
-      console.error("[extract-meta] Gemini API error:", geminiError);
+    } catch (qwenError) {
+      console.error("[extract-meta] Qwen API error:", qwenError);
       
       const heuristic = heuristicFromFilename(payload.imageUrl ?? null);
       return NextResponse.json({
@@ -423,8 +416,8 @@ export async function POST(request: Request) {
         sizes: heuristic.sizes,
         style: heuristic.style,
         confidence: heuristic.confidence,
-        warning: `Gemini API failed: ${geminiError instanceof Error ? geminiError.message : 'Unknown error'} – using heuristic fallback.`,
-        raw_json: { error: geminiError instanceof Error ? geminiError.message : 'Unknown error' },
+        warning: `Qwen API failed: ${qwenError instanceof Error ? qwenError.message : 'Unknown error'} – using heuristic fallback.`,
+        raw_json: { error: qwenError instanceof Error ? qwenError.message : 'Unknown error' },
       });
     }
 
