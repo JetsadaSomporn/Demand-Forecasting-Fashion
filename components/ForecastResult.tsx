@@ -29,14 +29,11 @@ type ForecastResultProps = {
   isInsightStreaming?: boolean;
 };
 
-function formatMonthLabel(month: string, locale: string) {
+function formatMonthLabel(month: string, formatter: Intl.DateTimeFormat) {
   const parsed = new Date(month.length === 7 ? `${month}-01` : month);
   if (!Number.isFinite(parsed.getTime())) return month;
   try {
-    return new Intl.DateTimeFormat(locale, {
-      month: "short",
-      year: "numeric",
-    }).format(parsed);
+    return formatter.format(parsed);
   } catch {
     return month;
   }
@@ -55,7 +52,16 @@ export default function ForecastResult({
   const { t, language } = useTranslation();
   const locale = language === "th" ? "th-TH" : "en-US";
   const numberFormatter = useMemo(() => new Intl.NumberFormat(locale), [locale]);
-  const labels = data.months.map((month) => formatMonthLabel(month, locale));
+  const dateFormatter = useMemo(() => new Intl.DateTimeFormat(locale, {
+    month: "short",
+    year: "numeric",
+  }), [locale]);
+  
+  const labels = useMemo(() => 
+    data.months.map((month) => formatMonthLabel(month, dateFormatter)),
+    [data.months, dateFormatter]
+  );
+  
   const actualValues = data.y_true ?? undefined;
   const modelName =
     data.model === "lgbm_full"

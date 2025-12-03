@@ -40,24 +40,6 @@ const HF_ROUTER_URL = "https://router.huggingface.co/v1/chat/completions";
 const DATA_URL_REGEX =
   /^data:(image\/[a-z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/i;
 
-function extensionFromMime(mime: string) {
-  switch (mime) {
-    case "image/jpeg":
-    case "image/jpg":
-      return "jpg";
-    case "image/png":
-      return "png";
-    case "image/webp":
-      return "webp";
-    case "image/heic":
-      return "heic";
-    case "image/heif":
-      return "heif";
-    default:
-      return null;
-  }
-}
-
 function normalizeColor(input: string | null | undefined) {
   if (!input) return DEFAULT_COLOR;
   const cleaned = input.trim().toUpperCase();
@@ -105,7 +87,6 @@ async function compressBase64Image(dataUrl: string, maxSizeKB = 100): Promise<st
       return dataUrl; // Return original if can't parse
     }
 
-    const mime = match[1];
     const base64 = match[2];
     
     // Check current size

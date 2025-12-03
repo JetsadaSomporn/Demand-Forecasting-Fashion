@@ -389,9 +389,9 @@ async function detectHistoricalColumnsWithLlama(
   const snippet =
     sampleRows.length > 0
       ? sampleRows
-          .slice(0, 5)
-          .map((row, index) => `${index + 1}. ${JSON.stringify(row)}`)
-          .join("\n")
+        .slice(0, 5)
+        .map((row, index) => `${index + 1}. ${JSON.stringify(row)}`)
+        .join("\n")
       : "No sample rows available.";
 
   const prompt = `You are helping map CSV headers to the fields required by a retail demand forecasting model.
@@ -466,8 +466,8 @@ function parseQuantityValue(value: string | undefined): number {
     hasComma && hasDot
       ? cleaned.replace(/,/g, "")
       : hasComma && !hasDot
-      ? cleaned.replace(/,/g, ".")
-      : cleaned;
+        ? cleaned.replace(/,/g, ".")
+        : cleaned;
   const numeric = Number.parseFloat(normalized.replace(/[^0-9.+-]/g, ""));
   if (Number.isFinite(numeric)) {
     return numeric;
@@ -533,8 +533,13 @@ async function normalizeHistoricalCsv(
   const parsed = parseCsv(decoded);
   if (!parsed.headers.length) return null;
 
-  const llamaResponse = await detectHistoricalColumnsWithLlama(parsed.headers, parsed.rows.slice(0, 5));
-  const detection = resolveColumnDetection(parsed.headers, llamaResponse);
+  // Optimization: Try heuristic detection first to avoid unnecessary LLM calls
+  let detection = resolveColumnDetection(parsed.headers, null);
+
+  if (!detection) {
+    const llamaResponse = await detectHistoricalColumnsWithLlama(parsed.headers, parsed.rows.slice(0, 5));
+    detection = resolveColumnDetection(parsed.headers, llamaResponse);
+  }
 
   if (!detection) {
     console.warn("[CSV] Unable to map columns, keeping original content");
@@ -601,9 +606,9 @@ async function runRemoteInference(payload: ForecastRequest): Promise<PythonForec
 
   const eventId =
     typeof startPayload === "object" &&
-    startPayload &&
-    "event_id" in startPayload &&
-    typeof (startPayload as { event_id: unknown }).event_id === "string"
+      startPayload &&
+      "event_id" in startPayload &&
+      typeof (startPayload as { event_id: unknown }).event_id === "string"
       ? ((startPayload as { event_id: string }).event_id ?? "").trim()
       : "";
 
@@ -794,40 +799,67 @@ async function persistForecast(
       console.error("Supabase persistence error", error);
     }
   } else {
-    await fs.mkdir(LOCAL_FORECAST_DIR, { recursive: true });
-    const record = {
-      id: forecastId,
-      product: productParams,
-      model_name: result.model,
-      horizon: result.horizon,
-      params: {
+    try {
+      await fs.mkdir(LOCAL_FORECAST_DIR, { recursive: true });
+      const record = {
+        id: forecastId,
         product: productParams,
-        productCurrency: currency,
-        model: result.model,
-        salesCsvUrl: payload.salesCsvUrl ?? null,
-        imageUrl: payload.imageUrl ?? null,
-        warning: warning ?? result.warning ?? null,
+        model_name: result.model,
+        horizon: result.horizon,
+        params: {
+          product: productParams,
+          productCurrency: currency,
+          model: result.model,
+          salesCsvUrl: payload.salesCsvUrl ?? null,
+          imageUrl: payload.imageUrl ?? null,
+          warning: warning ?? result.warning ?? null,
+          months: result.months ?? [],
+          yPred: result.y_pred ?? [],
+        },
+        y_true: result.y_true ?? null,
+        y_pred: result.y_pred ?? [],
         months: result.months ?? [],
-        yPred: result.y_pred ?? [],
-      },
-      y_true: result.y_true ?? null,
-      y_pred: result.y_pred ?? [],
-      months: result.months ?? [],
-      created_at: timestamp,
-      summary: null,
-      summary_language: null,
-      summary_created_at: null,
-    };
+        created_at: timestamp,
+        summary: null,
+        summary_language: null,
+        summary_created_at: null,
+      };
 
-    await fs.writeFile(
-      path.join(LOCAL_FORECAST_DIR, `${forecastId}.json`),
-      JSON.stringify(record, null, 2),
-      "utf8"
-    );
+      await fs.writeFile(
+        path.join(LOCAL_FORECAST_DIR, `${forecastId}.json`),
+        JSON.stringify(record, null, 2),
+        "utf8"
+      );
+    } catch (error) {
+      console.error("Local filesystem persistence error", error);
+    }
   }
 
   return forecastId;
 }
+
+const CATEGORY_MAP: Record<string, string> = {
+  "CHILD": "CHILDREN",
+  "KIDS": "CHILDREN",
+  "KID": "CHILDREN",
+  "BABY": "CHILDREN",
+  "TODDLER": "CHILDREN",
+  "MEN": "MASCULINE",
+  "MENS": "MASCULINE",
+  "MALE": "MASCULINE",
+  "MAN": "MASCULINE",
+  "MENSWEAR": "MASCULINE",
+  "BOYS": "MASCULINE",
+  "WOMEN": "FEMININE",
+  "WOMENS": "FEMININE",
+  "FEMALE": "FEMININE",
+  "WOMAN": "FEMININE",
+  "LADIES": "FEMININE",
+  "GIRLS": "FEMININE",
+  "MUSCULINE": "MASCULINE",
+  "MASCULIN": "MASCULINE",
+  "FEMININ": "FEMININE",
+};
 
 export async function POST(request: Request) {
   try {
@@ -838,36 +870,10 @@ export async function POST(request: Request) {
     const requestLanguage: SupportedLanguage = parsed.language === "th" ? "th" : "en";
     const productWithThaiNormalization = translateThaiProduct(parsed.product);
 
-    // DISABLED: LLM validation was returning cached/wrong values
-    // const validation = await validateWithLlama(productWithThaiNormalization);
-    
     // Normalize product values directly without LLM validation
-    const categoryMap: Record<string, string> = {
-      "CHILD": "CHILDREN",
-      "KIDS": "CHILDREN",
-      "KID": "CHILDREN",
-      "BABY": "CHILDREN",
-      "TODDLER": "CHILDREN",
-      "MEN": "MASCULINE",
-      "MENS": "MASCULINE",
-      "MALE": "MASCULINE",
-      "MAN": "MASCULINE",
-      "MENSWEAR": "MASCULINE",
-      "BOYS": "MASCULINE",
-      "WOMEN": "FEMININE",
-      "WOMENS": "FEMININE",
-      "FEMALE": "FEMININE",
-      "WOMAN": "FEMININE",
-      "LADIES": "FEMININE",
-      "GIRLS": "FEMININE",
-      "MUSCULINE": "MASCULINE",
-      "MASCULIN": "MASCULINE",
-      "FEMININ": "FEMININE",
-    };
-    
     const upperCategory = (productWithThaiNormalization.category || "").toString().toUpperCase().trim();
-    const mappedCategory = categoryMap[upperCategory] || upperCategory;
-    
+    const mappedCategory = CATEGORY_MAP[upperCategory] || upperCategory;
+
     const productToUse = {
       ...productWithThaiNormalization,
       category: mappedCategory,
@@ -966,9 +972,9 @@ export async function POST(request: Request) {
     const baseResult =
       "metrics" in pythonResult
         ? (({ metrics: _unusedMetrics, ...rest }) => {
-            void _unusedMetrics;
-            return rest;
-          })(pythonResult as PythonForecastResponse)
+          void _unusedMetrics;
+          return rest;
+        })(pythonResult as PythonForecastResponse)
         : pythonResult;
 
     const resultPayload = {

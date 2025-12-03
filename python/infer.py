@@ -132,8 +132,13 @@ def model_exists(model_key: str) -> bool:
     return path.exists()
 
 
+_MODEL_CACHE = {}
+
 def load_model(model_key: str):
-    """Load the actual LightGBM model from pickle file"""
+    """Load the actual LightGBM model from pickle file with caching"""
+    if model_key in _MODEL_CACHE:
+        return _MODEL_CACHE[model_key]
+
     if not joblib:
         return None
     path = MODEL_PATHS.get(model_key)
@@ -141,6 +146,7 @@ def load_model(model_key: str):
         return None
     try:
         model = joblib.load(path)
+        _MODEL_CACHE[model_key] = model
         return model
     except Exception:
         return None
@@ -237,9 +243,6 @@ def create_features(payload: dict, model_key: str, horizon: int) -> pd.DataFrame
     sizes = str(product.get("sizes") or "").strip().upper()
     cost = float(product.get("cost") or 290.0)
     first_sale = product.get("first_sale_month", "2025-01")
-    
-    # Debug log to verify input values
-    print(f"[Python] Input → Category: {category}, Color: {color}, Cost: {cost}, Sizes: {sizes}", file=sys.stderr)
     
     # Parse first sale month
     try:
@@ -388,15 +391,8 @@ def create_features(payload: dict, model_key: str, horizon: int) -> pd.DataFrame
     df["Color"] = color
     df["Sizes"] = sizes
     
-    # Debug log before coercion
-    print(f"[Python] Product ID: {product_id} (from {product_signature})", file=sys.stderr)
-    print(f"[Python] Before coercion → Category: {df['Category'].iloc[0]}, Color: {df['Color'].iloc[0]}", file=sys.stderr)
-    
     # Force categorical columns to match training exactly
     df = coerce_categories(df)
-    
-    # Debug log after coercion
-    print(f"[Python] After coercion → Category: {df['Category'].iloc[0]}, Color: {df['Color'].iloc[0]}", file=sys.stderr)
     
     # Ensure all numeric columns are correct dtype
     numeric_cols = ['product_id', 'm', 'month_idx', 'age_m', 'is_first_year',
