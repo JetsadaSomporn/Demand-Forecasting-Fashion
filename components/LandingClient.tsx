@@ -108,9 +108,9 @@ export default function LandingClient({
         </video>
       </div>
 
-      {/* Header (Glassmorphism) */}
-      <header className="fixed top-0 left-0 z-50 flex w-full items-center justify-between px-6 py-4 transition-all duration-300 backdrop-blur-md bg-black/20 border-b border-white/5">
-        <Link href="/" className="font-display text-sm tracking-[0.2em] uppercase text-white hover:text-white/70 transition-colors">
+      {/* Header (Transparent & Minimal) */}
+      <header className="fixed top-0 left-0 z-50 flex w-full items-center justify-between px-6 py-8 transition-all duration-300">
+        <Link href="/" className="font-display text-sm tracking-[0.2em] uppercase text-white hover:opacity-70 transition-opacity">
           {t("common.brand")}
         </Link>
         <div className="hidden flex-1 items-center justify-center md:flex">
@@ -265,37 +265,39 @@ export default function LandingClient({
         </div>
       </section>
 
-      {/* 4. FINAL CTA */}
-      <section className="relative z-20 w-full bg-black py-40 flex flex-col items-center text-center px-6">
-         <h2 className="text-5xl md:text-8xl font-display font-bold text-white mb-8 tracking-tight">
-            {language === "th" ? "อนาคต." : "Future."}
-         </h2>
-         <p className="text-white/50 text-xl mb-12 max-w-2xl">
-            {language === "th" 
-             ? "พร้อมที่จะเปลี่ยนวิธีที่คุณทำธุรกิจหรือยัง?"
-             : "Ready to change the way you do business?"}
-         </p>
-         <Link
-            href="/forecast"
-            className="inline-flex items-center justify-center rounded-full bg-blue-600 px-10 py-5 text-sm font-bold uppercase tracking-widest text-white transition-all hover:bg-blue-500 hover:scale-105 shadow-[0_0_50px_rgba(37,99,235,0.5)]"
-          >
-            {language === "th" ? "เริ่มเลย ฟรี" : "Get Started for Free"}
-          </Link>
-      </section>
+      {/* 4. FINAL CTA & FOOTER WRAPPER */}
+      <div className="relative z-20 w-full bg-black">
+        <section className="flex flex-col items-center text-center px-6 pt-40 pb-24">
+           <h2 className="text-5xl md:text-8xl font-display font-bold text-white mb-8 tracking-tight">
+              {language === "th" ? "อนาคต." : "Future."}
+           </h2>
+           <p className="text-white/50 text-xl mb-12 max-w-2xl">
+              {language === "th" 
+               ? "พร้อมที่จะเปลี่ยนวิธีที่คุณทำธุรกิจหรือยัง?"
+               : "Ready to change the way you do business?"}
+           </p>
+           <Link
+              href="/forecast"
+              className="inline-flex items-center justify-center rounded-full bg-blue-600 px-10 py-5 text-sm font-bold uppercase tracking-widest text-white transition-all hover:bg-blue-500 hover:scale-105 shadow-[0_0_50px_rgba(37,99,235,0.5)]"
+            >
+              {language === "th" ? "เริ่มเลย ฟรี" : "Get Started for Free"}
+            </Link>
+        </section>
 
-      {/* Footer */}
-      <footer className="relative z-20 w-full border-t border-white/10 bg-[#050505] px-6 py-16">
-        <div className="mx-auto max-w-6xl flex flex-col md:flex-row justify-between items-center gap-8">
-           <div className="text-xs text-white/40 font-mono">
-              © 2025 FASHION DEMAND FORECAST
-           </div>
-           <div className="flex gap-8 text-xs uppercase tracking-widest text-white/60">
-              <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
-              <Link href="#" className="hover:text-white transition-colors">Terms</Link>
-              <Link href="#" className="hover:text-white transition-colors">Contact</Link>
-           </div>
-        </div>
-      </footer>
+        {/* Footer */}
+        <footer className="w-full px-6 py-12">
+          <div className="mx-auto max-w-6xl flex flex-col md:flex-row justify-between items-center gap-8">
+             <div className="text-[10px] text-white/20 font-mono uppercase tracking-widest">
+                © 2025 Fashion Demand Forecast
+             </div>
+             <div className="flex gap-8 text-[10px] uppercase tracking-widest text-white/40">
+                <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
+                <Link href="#" className="hover:text-white transition-colors">Terms</Link>
+                <Link href="#" className="hover:text-white transition-colors">Contact</Link>
+             </div>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
