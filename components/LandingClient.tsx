@@ -2,7 +2,7 @@
 
 import React, { useRef } from "react";
 import Link from "next/link";
-import { ArrowRight, Brain, Cpu, Globe, Leaf, LineChart, MousePointerClick, TrendingUp, Upload } from "lucide-react";
+import { ArrowRight, Brain, Cpu, Globe, Leaf, LineChart, MousePointerClick, TrendingUp, Upload, ChevronRight } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -265,34 +265,100 @@ export default function LandingClient({
         </div>
       </section>
 
-      {/* 4. FINAL CTA & FOOTER WRAPPER */}
-      <div className="relative z-20 w-full bg-black flex flex-col items-center justify-center pb-12 pt-32">
-         {/* Minimal CTA */}
-         <h2 className="text-2xl font-normal text-white mb-8 tracking-wide text-center opacity-90">
-           {language === "th" ? "สัมผัสอนาคตแห่งการพยากรณ์" : "Experience the future of forecasting."}
-         </h2>
-         
-         <Link
-            href="/forecast"
-            className="mb-24 inline-flex h-[40px] min-w-[260px] items-center justify-center rounded-md bg-white px-6 text-[13px] font-medium text-black transition-transform hover:scale-105"
-          >
-            {language === "th" ? "เริ่มเลย" : "Get Started"}
-          </Link>
+      {/* 4. FINAL CTA (Apple Style) */}
+      <section className="relative z-20 w-full bg-black pt-32 pb-24 px-6">
+         <div className="mx-auto max-w-4xl text-center">
+           <h2 className="text-5xl md:text-7xl font-semibold text-white mb-4 tracking-tight">
+             {language === "th" ? "การพยากรณ์ระดับโปร" : "Pro-level forecasting."}
+           </h2>
+           <h3 className="text-3xl md:text-5xl font-semibold text-gray-500 mb-12 tracking-tight">
+              {language === "th" ? "ใช้งานง่ายจนคุณหลงรัก" : "Effortless to use."}
+           </h3>
+           
+           <div className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-8">
+              <Link
+                href="/forecast"
+                className="text-xl text-blue-500 hover:underline flex items-center gap-1"
+              >
+                {language === "th" ? "เริ่มใช้งาน" : "Get Started"} <ChevronRight className="w-5 h-5" />
+              </Link>
+              <Link
+                href="/settings"
+                className="text-xl text-blue-500 hover:underline flex items-center gap-1"
+              >
+                {language === "th" ? "เรียนรู้เพิ่มเติม" : "Learn more"} <ChevronRight className="w-5 h-5" />
+              </Link>
+           </div>
+           <p className="text-sm text-gray-500">
+              {language === "th" ? "ทดลองใช้ฟรีวันนี้" : "Free trial available."}
+           </p>
+         </div>
+      </section>
 
-        {/* Ultra-Minimal Tesla-style Footer */}
-        <footer className="w-full flex justify-center">
-          <ul className="flex flex-col md:flex-row items-center gap-4 md:gap-6 text-[12px] font-medium text-[#D0D1D2]">
-             <li>Fashion Demand Forecast © 2025</li>
-             <li className="hidden md:block text-[10px] text-gray-600">•</li>
-             <li><Link href="#" className="hover:text-white transition-colors">Privacy & Legal</Link></li>
-             <li><Link href="#" className="hover:text-white transition-colors">Vehicle Recalls</Link></li>
-             <li><Link href="#" className="hover:text-white transition-colors">Contact</Link></li>
-             <li><Link href="#" className="hover:text-white transition-colors">News</Link></li>
-             <li><Link href="#" className="hover:text-white transition-colors">Get Updates</Link></li>
-             <li><Link href="#" className="hover:text-white transition-colors">Locations</Link></li>
-          </ul>
-        </footer>
-      </div>
+      {/* 5. FOOTER (Apple Style) */}
+      <footer className="relative z-20 w-full bg-[#1d1d1f] text-[#86868b] text-[12px]">
+        <div className="mx-auto max-w-5xl px-6 py-10">
+          {/* Link Columns */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
+            <div className="flex flex-col gap-2">
+              <h4 className="text-white font-semibold mb-1">Product</h4>
+              <Link href="#" className="hover:underline">Features</Link>
+              <Link href="#" className="hover:underline">Pricing</Link>
+              <Link href="#" className="hover:underline">Changelog</Link>
+              <Link href="#" className="hover:underline">Roadmap</Link>
+            </div>
+            <div className="flex flex-col gap-2">
+              <h4 className="text-white font-semibold mb-1">Resources</h4>
+              <Link href="#" className="hover:underline">Documentation</Link>
+              <Link href="#" className="hover:underline">API Reference</Link>
+              <Link href="#" className="hover:underline">Blog</Link>
+              <Link href="#" className="hover:underline">Community</Link>
+            </div>
+            <div className="flex flex-col gap-2">
+              <h4 className="text-white font-semibold mb-1">Account</h4>
+              <Link href="#" className="hover:underline">Manage Account</Link>
+              <Link href="/login" className="hover:underline">Login</Link>
+              <Link href="/login" className="hover:underline">Register</Link>
+            </div>
+             <div className="flex flex-col gap-2">
+              <h4 className="text-white font-semibold mb-1">Connect</h4>
+              <Link href="#" className="hover:underline">Contact Us</Link>
+              <Link href="#" className="hover:underline">Twitter</Link>
+              <Link href="#" className="hover:underline">GitHub</Link>
+              <Link href="#" className="hover:underline">LinkedIn</Link>
+            </div>
+             <div className="flex flex-col gap-2">
+              <h4 className="text-white font-semibold mb-1">Legal</h4>
+              <Link href="#" className="hover:underline">Privacy Policy</Link>
+              <Link href="#" className="hover:underline">Terms of Use</Link>
+              <Link href="#" className="hover:underline">Compliance</Link>
+            </div>
+          </div>
+          
+          {/* Bottom Section */}
+          <div className="border-t border-[#424245] pt-8">
+             <div className="mb-4">
+               More ways to shop: <Link href="#" className="text-blue-500 hover:underline">Find a partner</Link> or <Link href="#" className="text-blue-500 hover:underline">contact sales</Link>.
+             </div>
+             <div className="flex flex-col md:flex-row justify-between gap-4">
+                <div>
+                   Copyright © 2025 Fashion Demand Forecast. All rights reserved.
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                   <Link href="#" className="hover:underline">Privacy Policy</Link>
+                   <span className="text-[#424245]">|</span>
+                   <Link href="#" className="hover:underline">Terms of Use</Link>
+                   <span className="text-[#424245]">|</span>
+                   <Link href="#" className="hover:underline">Sales and Refunds</Link>
+                   <span className="text-[#424245]">|</span>
+                   <Link href="#" className="hover:underline">Legal</Link>
+                   <span className="text-[#424245]">|</span>
+                   <Link href="#" className="hover:underline">Site Map</Link>
+                </div>
+             </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
