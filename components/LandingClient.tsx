@@ -266,36 +266,25 @@ export default function LandingClient({
       </section>
 
       {/* 4. FINAL CTA & FOOTER WRAPPER */}
-      <div className="relative z-20 w-full bg-black">
-        <section className="flex flex-col items-center text-center px-6 pt-40 pb-24">
-           <h2 className="text-5xl md:text-8xl font-display font-bold text-white mb-8 tracking-tight">
-              {language === "th" ? "อนาคต." : "Future."}
-           </h2>
-           <p className="text-white/50 text-xl mb-12 max-w-2xl">
-              {language === "th" 
-               ? "พร้อมที่จะเปลี่ยนวิธีที่คุณทำธุรกิจหรือยัง?"
-               : "Ready to change the way you do business?"}
-           </p>
-           <Link
-              href="/forecast"
-              className="inline-flex items-center justify-center rounded-full bg-blue-600 px-10 py-5 text-sm font-bold uppercase tracking-widest text-white transition-all hover:bg-blue-500 hover:scale-105 shadow-[0_0_50px_rgba(37,99,235,0.5)]"
-            >
-              {language === "th" ? "เริ่มเลย ฟรี" : "Get Started for Free"}
-            </Link>
-        </section>
+      <div className="relative z-20 w-full bg-black flex flex-col items-center justify-center pb-12 pt-32">
+         {/* Minimal CTA */}
+         <h2 className="text-3xl md:text-4xl font-medium text-white mb-8 tracking-wide text-center">
+           {language === "th" ? "สัมผัสอนาคตแห่งการพยากรณ์" : "Experience the future of forecasting."}
+         </h2>
+         <Link
+            href="/forecast"
+            className="mb-24 inline-flex min-w-[200px] items-center justify-center rounded-full bg-white px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-black transition-transform hover:scale-105"
+          >
+            {language === "th" ? "เริ่มเลย" : "Get Started"}
+          </Link>
 
-        {/* Footer */}
-        <footer className="w-full px-6 py-12">
-          <div className="mx-auto max-w-6xl flex flex-col md:flex-row justify-between items-center gap-8">
-             <div className="text-[10px] text-white/20 font-mono uppercase tracking-widest">
-                © 2025 Fashion Demand Forecast
-             </div>
-             <div className="flex gap-8 text-[10px] uppercase tracking-widest text-white/40">
-                <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
-                <Link href="#" className="hover:text-white transition-colors">Terms</Link>
-                <Link href="#" className="hover:text-white transition-colors">Contact</Link>
-             </div>
-          </div>
+        {/* Ultra-Minimal Tesla-style Footer */}
+        <footer className="w-full flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8 text-[11px] text-gray-500 font-medium">
+           <span>Fashion Demand Forecast © 2025</span>
+           <Link href="#" className="hover:text-white transition-colors">Privacy & Legal</Link>
+           <Link href="#" className="hover:text-white transition-colors">Vehicle Recalls</Link>
+           <Link href="#" className="hover:text-white transition-colors">Contact</Link>
+           <Link href="#" className="hover:text-white transition-colors">News</Link>
         </footer>
       </div>
     </div>
