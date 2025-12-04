@@ -268,23 +268,29 @@ export default function LandingClient({
       {/* 4. FINAL CTA & FOOTER WRAPPER */}
       <div className="relative z-20 w-full bg-black flex flex-col items-center justify-center pb-12 pt-32">
          {/* Minimal CTA */}
-         <h2 className="text-3xl md:text-4xl font-medium text-white mb-8 tracking-wide text-center">
+         <h2 className="text-2xl font-normal text-white mb-8 tracking-wide text-center opacity-90">
            {language === "th" ? "สัมผัสอนาคตแห่งการพยากรณ์" : "Experience the future of forecasting."}
          </h2>
+         
          <Link
             href="/forecast"
-            className="mb-24 inline-flex min-w-[200px] items-center justify-center rounded-full bg-white px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-black transition-transform hover:scale-105"
+            className="mb-24 inline-flex h-[40px] min-w-[260px] items-center justify-center rounded-md bg-white px-6 text-[13px] font-medium text-black transition-transform hover:scale-105"
           >
             {language === "th" ? "เริ่มเลย" : "Get Started"}
           </Link>
 
         {/* Ultra-Minimal Tesla-style Footer */}
-        <footer className="w-full flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8 text-[11px] text-gray-500 font-medium">
-           <span>Fashion Demand Forecast © 2025</span>
-           <Link href="#" className="hover:text-white transition-colors">Privacy & Legal</Link>
-           <Link href="#" className="hover:text-white transition-colors">Vehicle Recalls</Link>
-           <Link href="#" className="hover:text-white transition-colors">Contact</Link>
-           <Link href="#" className="hover:text-white transition-colors">News</Link>
+        <footer className="w-full flex justify-center">
+          <ul className="flex flex-col md:flex-row items-center gap-4 md:gap-6 text-[12px] font-medium text-[#D0D1D2]">
+             <li>Fashion Demand Forecast © 2025</li>
+             <li className="hidden md:block text-[10px] text-gray-600">•</li>
+             <li><Link href="#" className="hover:text-white transition-colors">Privacy & Legal</Link></li>
+             <li><Link href="#" className="hover:text-white transition-colors">Vehicle Recalls</Link></li>
+             <li><Link href="#" className="hover:text-white transition-colors">Contact</Link></li>
+             <li><Link href="#" className="hover:text-white transition-colors">News</Link></li>
+             <li><Link href="#" className="hover:text-white transition-colors">Get Updates</Link></li>
+             <li><Link href="#" className="hover:text-white transition-colors">Locations</Link></li>
+          </ul>
         </footer>
       </div>
     </div>
