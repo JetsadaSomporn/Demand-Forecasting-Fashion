@@ -25,107 +25,99 @@ export default function LandingClient({
 }: LandingClientProps) {
   const { t, language } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoOverlayRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
-  
-  // Refs for staggered animations
-  const impactSectionRef = useRef<HTMLDivElement>(null);
-  const workflowSectionRef = useRef<HTMLDivElement>(null);
-  const ctaSectionRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const textRevealRef = useRef<HTMLDivElement>(null);
+  const bentoRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
-      // 1. Subtle Video Darkening
-      gsap.to(videoOverlayRef.current, {
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top top",
-          end: "bottom bottom",
-          scrub: true,
-        },
-        opacity: 0.9, 
-        ease: "none",
-      });
-
-      // 2. Minimal Hero Fade (Parallax)
-      // Moves slightly slower than scroll and fades out
-      gsap.to(heroRef.current, {
+      // 1. Hero Fade Out & Video Blur
+      const tlHero = gsap.timeline({
         scrollTrigger: {
           trigger: heroRef.current,
           start: "top top",
-          end: "bottom 40%", // Fades out earlier
+          end: "bottom top",
           scrub: true,
         },
-        y: 50, // Reduced movement
-        opacity: 0,
-        ease: "power1.inOut",
       });
 
-      // 3. Staggered Reveals (Generic Utility)
-      const setupStagger = (trigger: HTMLElement | null, targets: string) => {
-        if (!trigger) return;
-        
-        // Select elements inside the trigger
-        const elements = trigger.querySelectorAll(targets);
-        
-        gsap.fromTo(
-          elements,
-          { y: 30, opacity: 0 }, // Very subtle shift
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.8,
-            stagger: 0.15, // Nice delay between items
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: trigger,
-              start: "top 75%", // Starts when section is well into view
-              toggleActions: "play none none reverse",
-            },
-          }
-        );
-      };
+      tlHero
+        .to(heroRef.current, { opacity: 0, scale: 0.95, ease: "power1.out" })
+        .to(videoRef.current, { filter: "blur(20px)", opacity: 0.2 }, 0);
 
-      setupStagger(impactSectionRef.current, ".anim-item");
-      setupStagger(workflowSectionRef.current, ".anim-item");
-      setupStagger(ctaSectionRef.current, ".anim-item");
+      // 2. Cinematic Text Reveal (Pinned Section)
+      // This section pins the screen and swaps text based on scroll position
+      const texts = gsap.utils.toArray(".reveal-text");
+      
+      const tlText = gsap.timeline({
+        scrollTrigger: {
+          trigger: textRevealRef.current,
+          start: "top top",
+          end: "+=300%", // Pin for 3 screen heights
+          pin: true,
+          scrub: 0.5,
+        },
+      });
+
+      texts.forEach((text: any, i) => {
+        // Fade in
+        tlText.fromTo(
+          text,
+          { opacity: 0, y: 50, filter: "blur(10px)" },
+          { opacity: 1, y: 0, filter: "blur(0px)", duration: 1, ease: "power2.out" }
+        );
+        // Fade out (unless it's the last one)
+        if (i < texts.length - 1) {
+          tlText.to(text, { opacity: 0, y: -50, filter: "blur(10px)", duration: 1, ease: "power2.in" }, "+=0.5");
+        }
+      });
+
+      // 3. Bento Grid Parallax
+      // Cards move at slightly different speeds
+      gsap.from(".bento-card", {
+        scrollTrigger: {
+          trigger: bentoRef.current,
+          start: "top 80%",
+          end: "bottom top",
+          scrub: 1,
+        },
+        y: (i) => i * 50 + 100, // Staggered Y start
+        opacity: 0,
+        duration: 1,
+      });
+
     },
     { scope: containerRef }
   );
 
   return (
-    <div ref={containerRef} className="relative min-h-[300vh] flex flex-col bg-black text-white selection:bg-white/20 font-sans">
+    <div ref={containerRef} className="relative bg-black text-white selection:bg-white/20 font-sans overflow-x-hidden">
+      
       {/* Fixed Background Video */}
-      <div className="fixed inset-0 z-0 h-screen w-full overflow-hidden">
+      <div className="fixed inset-0 z-0 h-screen w-full overflow-hidden bg-black">
         <video
+          ref={videoRef}
           autoPlay
           loop
           muted
           playsInline
-          className="absolute inset-0 h-full w-full object-cover opacity-80"
+          className="absolute inset-0 h-full w-full object-cover opacity-60 transition-all duration-500"
         >
           <source src="/media/hero.mp4" type="video/mp4" />
         </video>
-        {/* Dynamic Overlay */}
-        <div 
-          ref={videoOverlayRef}
-          className="absolute inset-0 bg-black opacity-0" 
-          aria-hidden 
-        />
-        {/* Static Grain/Texture (optional, keeps it minimal) */}
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03]" aria-hidden />
       </div>
 
-      {/* Header */}
-      <header className="fixed top-0 left-0 z-50 flex w-full items-center justify-between gap-4 px-6 py-6 mix-blend-difference text-white/90 transition-all duration-300">
-        <Link href="/" className="font-display text-sm tracking-[0.3em] uppercase hover:opacity-70 transition-opacity">
+      {/* Header (Glassmorphism) */}
+      <header className="fixed top-0 left-0 z-50 flex w-full items-center justify-between px-6 py-4 transition-all duration-300 backdrop-blur-md bg-black/20 border-b border-white/5">
+        <Link href="/" className="font-display text-sm tracking-[0.2em] uppercase text-white hover:text-white/70 transition-colors">
           {t("common.brand")}
         </Link>
         <div className="hidden flex-1 items-center justify-center md:flex">
           <Navigation items={navItems} />
         </div>
         <div className="flex items-center gap-4 text-[11px] uppercase tracking-[0.2em]">
-          <span className="hidden sm:inline text-white/60">{accountLabel}</span>
+          <span className="hidden sm:inline text-white/70">{accountLabel}</span>
           <Link
             href={isAuthenticated ? "/logout" : "/login"}
             prefetch={false}
@@ -136,185 +128,174 @@ export default function LandingClient({
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="relative z-10 flex flex-col items-center w-full">
-        
-        {/* HERO SECTION */}
-        <section 
-          ref={heroRef}
-          className="flex min-h-screen w-full flex-col items-center justify-center px-6 text-center pt-20"
-        >
+      {/* 1. HERO SECTION */}
+      <section 
+        ref={heroRef}
+        className="relative z-10 flex h-screen w-full flex-col items-center justify-center px-6 text-center"
+      >
+        <div className="flex flex-col items-center gap-6">
           <InteractiveTitle title="Forecast" />
-          <p className="mx-auto mt-10 max-w-xl text-base md:text-lg leading-relaxed text-white/70 font-light tracking-wide">
+          <p className="max-w-xl text-lg md:text-2xl font-light text-white/80 leading-relaxed tracking-wide">
             {language === "th"
-              ? "ที่ที่คลื่นลูกใหม่ของการพยากรณ์ความต้องการกำลังก่อตัวขึ้น"
-              : "Where the next wave of storytelling-grade forecasting comes to life."}
+              ? "อนาคตของการพยากรณ์ อยู่ในมือคุณ"
+              : "The future of demand forecasting. Redefined."}
           </p>
-          
-          <div className="mt-16 flex flex-col items-center gap-8 sm:flex-row">
-            <Link
+          <div className="mt-8 flex items-center gap-4">
+             <Link
               href="/forecast"
-              className="group relative inline-flex items-center justify-center px-8 py-3 text-[10px] font-medium uppercase tracking-[0.3em] text-white border border-white/20 rounded-full hover:bg-white hover:text-black hover:border-transparent transition-all duration-300"
+              className="group relative inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-black transition-transform hover:scale-105"
             >
-              <span>{language === "th" ? "เริ่มสร้าง Forecast" : "Create Forecast"}</span>
-            </Link>
-            <Link
-              href="/settings"
-              className="text-[10px] uppercase tracking-[0.3em] text-white/50 hover:text-white transition-colors flex items-center gap-2"
-            >
-              {language === "th" ? "สำรวจการตั้งค่า" : "Explore settings"}
-              <ArrowRight className="h-3 w-3" />
+              {language === "th" ? "เริ่มต้น" : "Get Started"}
             </Link>
           </div>
-        </section>
+        </div>
+        
+        <div className="absolute bottom-10 text-white/30 text-[10px] uppercase tracking-[0.3em] animate-pulse">
+          Scroll to explore
+        </div>
+      </section>
 
-        {/* SECTION 1: THE IMPACT (Minimal Grid) */}
-        <section 
-          ref={impactSectionRef}
-          className="min-h-screen w-full max-w-7xl px-6 py-32 flex flex-col items-center justify-center"
-        >
-          <div className="anim-item mb-24 text-center">
-            <span className="block text-[9px] font-bold uppercase tracking-[0.4em] text-white/40 mb-4">
-              {language === "th" ? "ผลลัพธ์" : "The Impact"}
-            </span>
-            <h2 className="font-display text-3xl md:text-5xl font-light tracking-wide text-white/90">
-              {language === "th" ? "แม่นยำกว่า ยั่งยืนกว่า" : "Smarter. Greener. Faster."}
+      {/* 2. PINNED TEXT REVEAL (Cinematic Storytelling) */}
+      <section 
+        ref={textRevealRef}
+        className="relative z-20 h-screen w-full flex items-center justify-center bg-black"
+      >
+        <div className="relative w-full max-w-4xl text-center px-6">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <h2 className="reveal-text text-5xl md:text-8xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 tracking-tight opacity-0">
+              {language === "th" ? "แม่นยำ." : "Precision."}
             </h2>
           </div>
-          
-          <div className="grid w-full gap-px bg-white/10 border border-white/10 md:grid-cols-3 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
-            {/* Card 1 */}
-            <div className="anim-item group relative bg-black/40 p-12 backdrop-blur-sm transition-colors hover:bg-white/5">
-              <div className="mb-8 text-white/80 group-hover:text-blue-400 transition-colors">
-                <Brain className="h-8 w-8 stroke-1" />
-              </div>
-              <h3 className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-white">AI-Driven</h3>
-              <p className="text-sm leading-7 text-white/50 font-light">
-                {language === "th" 
-                 ? "ใช้โมเดล Machine Learning ขั้นสูงในการวิเคราะห์แนวโน้มเพื่อความแม่นยำสูงสุด"
-                 : "Powered by advanced Machine Learning models to analyze trends with pinpoint accuracy."}
-              </p>
-            </div>
-
-            {/* Card 2 */}
-            <div className="anim-item group relative bg-black/40 p-12 backdrop-blur-sm transition-colors hover:bg-white/5">
-              <div className="mb-8 text-white/80 group-hover:text-green-400 transition-colors">
-                <Leaf className="h-8 w-8 stroke-1" />
-              </div>
-              <h3 className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-white">Eco-Friendly</h3>
-              <p className="text-sm leading-7 text-white/50 font-light">
-                {language === "th"
-                 ? "ลดสต็อกส่วนเกิน ช่วยลดขยะและผลกระทบต่อสิ่งแวดล้อม"
-                 : "Reduce overstock and waste. Optimize your inventory for a sustainable future."}
-              </p>
-            </div>
-
-            {/* Card 3 */}
-            <div className="anim-item group relative bg-black/40 p-12 backdrop-blur-sm transition-colors hover:bg-white/5">
-              <div className="mb-8 text-white/80 group-hover:text-purple-400 transition-colors">
-                <TrendingUp className="h-8 w-8 stroke-1" />
-              </div>
-              <h3 className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-white">Max Profit</h3>
-              <p className="text-sm leading-7 text-white/50 font-light">
-                {language === "th"
-                 ? "เพิ่มกำไรสูงสุดด้วยการวางแผนที่แม่นยำและลดต้นทุนที่ไม่จำเป็น"
-                 : "Maximize margins by predicting exactly what you need, when you need it."}
-              </p>
-            </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <h2 className="reveal-text text-5xl md:text-8xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-b from-blue-400 to-blue-400/40 tracking-tight opacity-0">
+              {language === "th" ? "ชาญฉลาด." : "Intelligence."}
+            </h2>
           </div>
-        </section>
+           <div className="absolute inset-0 flex items-center justify-center">
+            <h2 className="reveal-text text-5xl md:text-8xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-b from-purple-400 to-purple-400/40 tracking-tight opacity-0">
+              {language === "th" ? "กำไร." : "Profit."}
+            </h2>
+          </div>
+        </div>
+      </section>
 
-        {/* SECTION 2: WORKFLOW (Minimal List) */}
-        <section 
-          ref={workflowSectionRef}
-          className="min-h-screen w-full max-w-4xl px-6 py-32 flex flex-col justify-center"
-        >
-          <div className="anim-item mb-20">
-            <span className="block text-[9px] font-bold uppercase tracking-[0.4em] text-white/40 mb-4">
-              {language === "th" ? "ขั้นตอน" : "Workflow"}
-            </span>
-            <h2 className="font-display text-3xl md:text-5xl font-light tracking-wide text-white/90">
-              {language === "th" ? "เรียบง่าย ทรงพลัง" : "Simple yet Powerful."}
+      {/* 3. BENTO GRID (Features) */}
+      <section 
+        ref={bentoRef}
+        className="relative z-20 w-full bg-black px-6 py-32"
+      >
+        <div className="mx-auto max-w-6xl">
+           <div className="mb-24 text-center">
+            <span className="text-blue-500 font-semibold tracking-widest uppercase text-xs">Features</span>
+            <h2 className="mt-4 text-4xl md:text-6xl font-display font-bold text-white">
+              {language === "th" ? "ทรงพลังทุกมิติ" : "Power in every pixel."}
             </h2>
           </div>
 
-          <div className="flex flex-col gap-16">
-            {/* Step 1 */}
-            <div className="anim-item flex flex-col md:flex-row gap-8 md:gap-16 border-t border-white/10 pt-8 transition-opacity hover:opacity-100 opacity-80">
-              <span className="text-xs font-mono text-white/40">01</span>
-              <div className="flex-1">
-                <h3 className="text-xl md:text-2xl font-light text-white mb-4">Upload Data</h3>
-                <p className="text-sm leading-relaxed text-white/50 max-w-md">
-                  {language === "th"
-                   ? "อัปโหลดไฟล์ CSV หรือ Excel ที่มีข้อมูลยอดขายในอดีตของคุณ"
-                   : "Drag and drop your historical sales data. We support CSV and Excel formats."}
-                </p>
-              </div>
-              <div className="hidden md:flex items-center justify-center h-12 w-12 rounded-full bg-white/5 text-white/30">
-                <Upload className="h-5 w-5 stroke-1" />
-              </div>
-            </div>
-
-            {/* Step 2 */}
-            <div className="anim-item flex flex-col md:flex-row gap-8 md:gap-16 border-t border-white/10 pt-8 transition-opacity hover:opacity-100 opacity-80">
-              <span className="text-xs font-mono text-white/40">02</span>
-              <div className="flex-1">
-                <h3 className="text-xl md:text-2xl font-light text-white mb-4">AI Processing</h3>
-                <p className="text-sm leading-relaxed text-white/50 max-w-md">
-                  {language === "th"
-                   ? "ระบบจะวิเคราะห์รูปแบบตามฤดูกาลและเทรนด์โดยอัตโนมัติ"
-                   : "Our LightGBM models analyze seasonality, trends, and anomalies in seconds."}
-                </p>
-              </div>
-              <div className="hidden md:flex items-center justify-center h-12 w-12 rounded-full bg-white/5 text-white/30">
-                <Cpu className="h-5 w-5 stroke-1" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[400px]">
+            {/* Card 1: Large Span */}
+            <div className="bento-card md:col-span-2 relative overflow-hidden rounded-3xl bg-[#0c0c0c] border border-white/10 p-10 transition-colors hover:border-white/20 group">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+              <div className="relative z-10 flex flex-col justify-between h-full">
+                <div>
+                  <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-white/10 text-white mb-6">
+                    <Brain className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-2xl font-semibold text-white mb-2">AI-Powered Core</h3>
+                  <p className="text-white/50 max-w-md">
+                    {language === "th" 
+                    ? "ระบบวิเคราะห์ข้อมูลระดับสูงที่เรียนรู้จากอดีตเพื่อทำนายอนาคตของคุณ"
+                    : "Our proprietary machine learning models analyze thousands of data points to predict demand with unprecedented accuracy."}
+                  </p>
+                </div>
+                <div className="w-full h-32 bg-gradient-to-t from-blue-500/20 to-transparent rounded-xl mt-8 border border-white/5 relative overflow-hidden">
+                   {/* Fake Graph Line */}
+                   <div className="absolute bottom-0 left-0 right-0 h-full w-full">
+                      <svg viewBox="0 0 100 50" className="w-full h-full text-blue-500 fill-current opacity-20">
+                        <path d="M0,50 Q25,20 50,30 T100,10 V50 H0 Z" />
+                      </svg>
+                   </div>
+                </div>
               </div>
             </div>
 
-            {/* Step 3 */}
-            <div className="anim-item flex flex-col md:flex-row gap-8 md:gap-16 border-t border-white/10 pt-8 transition-opacity hover:opacity-100 opacity-80">
-              <span className="text-xs font-mono text-white/40">03</span>
-              <div className="flex-1">
-                <h3 className="text-xl md:text-2xl font-light text-white mb-4">Actionable Forecasts</h3>
-                <p className="text-sm leading-relaxed text-white/50 max-w-md">
-                  {language === "th"
-                   ? "รับผลลัพธ์การพยากรณ์ที่แม่นยำเพื่อนำไปวางแผนการผลิตทันที"
-                   : "Receive precise demand predictions and export them for your production planning."}
+            {/* Card 2: Tall */}
+            <div className="bento-card md:col-span-1 relative overflow-hidden rounded-3xl bg-[#0c0c0c] border border-white/10 p-10 transition-colors hover:border-white/20 group">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-white/10 text-white mb-6">
+                  <Leaf className="h-6 w-6" />
+                </div>
+                <h3 className="text-2xl font-semibold text-white mb-2">Sustainable</h3>
+                <p className="text-white/50 mb-8">
+                   {language === "th" ? "ลดขยะ ลดต้นทุน" : "Cut waste. Save the planet."}
                 </p>
+                <div className="flex-1 flex items-center justify-center">
+                   <div className="relative h-32 w-32 rounded-full border-4 border-green-500/20 flex items-center justify-center">
+                      <span className="text-2xl font-bold text-green-500">-40%</span>
+                      <span className="absolute -bottom-6 text-xs text-white/40 uppercase tracking-widest">Waste</span>
+                   </div>
+                </div>
               </div>
-              <div className="hidden md:flex items-center justify-center h-12 w-12 rounded-full bg-white/5 text-white/30">
-                <LineChart className="h-5 w-5 stroke-1" />
+            </div>
+
+            {/* Card 3: Wide */}
+            <div className="bento-card md:col-span-3 relative overflow-hidden rounded-3xl bg-[#0c0c0c] border border-white/10 p-10 transition-colors hover:border-white/20 group flex flex-col md:flex-row items-center gap-10">
+              <div className="flex-1">
+                <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-white/10 text-white mb-6">
+                  <TrendingUp className="h-6 w-6" />
+                </div>
+                <h3 className="text-3xl font-semibold text-white mb-4">Maximize Revenue</h3>
+                <p className="text-white/50 text-lg">
+                  {language === "th" 
+                   ? "เปลี่ยนข้อมูลให้เป็นกำไร พยากรณ์แม่นยำช่วยให้คุณสต็อกสินค้าได้พอดีกับความต้องการ"
+                   : "Stop guessing. Start knowing. Optimize your inventory levels to ensure you never miss a sale or hold too much stock."}
+                </p>
+                <div className="mt-8">
+                   <Link href="/forecast" className="text-sm font-bold uppercase tracking-widest text-white hover:text-blue-400 transition-colors inline-flex items-center gap-2">
+                      {language === "th" ? "เริ่มใช้งาน" : "Start Forecasting"} <ArrowRight className="w-4 h-4"/>
+                   </Link>
+                </div>
+              </div>
+              <div className="flex-1 w-full max-w-md aspect-video bg-white/5 rounded-xl border border-white/10 flex items-center justify-center">
+                 <span className="text-white/20 font-mono text-xs">Interactive Chart Preview</span>
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* CTA SECTION (Minimal) */}
-        <section 
-          ref={ctaSectionRef}
-          className="min-h-[50vh] w-full flex flex-col items-center justify-center px-6 text-center pb-20"
-        >
-          <h2 className="anim-item mb-12 max-w-2xl font-display text-4xl md:text-6xl tracking-wider text-white">
-            {language === "th" ? "พร้อมเริ่มกันเลยไหม?" : "Ready to Predict?"}
-          </h2>
-          <Link
+      {/* 4. FINAL CTA */}
+      <section className="relative z-20 w-full bg-black py-40 flex flex-col items-center text-center px-6">
+         <h2 className="text-5xl md:text-8xl font-display font-bold text-white mb-8 tracking-tight">
+            {language === "th" ? "อนาคต." : "Future."}
+         </h2>
+         <p className="text-white/50 text-xl mb-12 max-w-2xl">
+            {language === "th" 
+             ? "พร้อมที่จะเปลี่ยนวิธีที่คุณทำธุรกิจหรือยัง?"
+             : "Ready to change the way you do business?"}
+         </p>
+         <Link
             href="/forecast"
-            className="anim-item group relative inline-flex items-center justify-center gap-3 rounded-full bg-white px-12 py-4 text-[11px] font-bold uppercase tracking-[0.25em] text-black transition-transform hover:scale-105"
+            className="inline-flex items-center justify-center rounded-full bg-blue-600 px-10 py-5 text-sm font-bold uppercase tracking-widest text-white transition-all hover:bg-blue-500 hover:scale-105 shadow-[0_0_50px_rgba(37,99,235,0.5)]"
           >
-            <span>{language === "th" ? "เริ่มเลย ฟรี" : "Start Now"}</span>
-            <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
+            {language === "th" ? "เริ่มเลย ฟรี" : "Get Started for Free"}
           </Link>
-        </section>
+      </section>
 
-        {/* Footer (Minimal) */}
-        <footer className="w-full border-t border-white/5 bg-black px-6 py-12 flex flex-col md:flex-row items-center justify-between text-white/30 text-[10px] uppercase tracking-[0.15em] gap-6">
-           <p>© 2025 Fashion Demand Forecast.</p>
-           <div className="flex gap-6">
-              <Globe className="h-4 w-4 hover:text-white/60 transition-colors cursor-pointer" />
-              <MousePointerClick className="h-4 w-4 hover:text-white/60 transition-colors cursor-pointer" />
+      {/* Footer */}
+      <footer className="relative z-20 w-full border-t border-white/10 bg-[#050505] px-6 py-16">
+        <div className="mx-auto max-w-6xl flex flex-col md:flex-row justify-between items-center gap-8">
+           <div className="text-xs text-white/40 font-mono">
+              © 2025 FASHION DEMAND FORECAST
            </div>
-        </footer>
-      </main>
+           <div className="flex gap-8 text-xs uppercase tracking-widest text-white/60">
+              <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
+              <Link href="#" className="hover:text-white transition-colors">Terms</Link>
+              <Link href="#" className="hover:text-white transition-colors">Contact</Link>
+           </div>
+        </div>
+      </footer>
     </div>
   );
 }
