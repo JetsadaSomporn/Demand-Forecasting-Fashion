@@ -143,7 +143,7 @@ export default function LandingClient({
           <div className="mt-8 flex items-center gap-4">
              <Link
               href="/forecast"
-              className="group relative inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-black transition-transform hover:scale-105"
+              className="group relative inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-black transition-transform hover:scale-105 shadow-[0_0_30px_rgba(255,255,255,0.3)]"
             >
               {language === "th" ? "เริ่มต้น" : "Get Started"}
             </Link>
@@ -162,17 +162,17 @@ export default function LandingClient({
       >
         <div className="relative w-full max-w-4xl text-center px-6">
           <div className="absolute inset-0 flex items-center justify-center">
-            <h2 className="reveal-text text-5xl md:text-8xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 tracking-tight opacity-0">
+            <h2 className="reveal-text text-5xl md:text-8xl font-display font-bold text-white tracking-tight opacity-0">
               {language === "th" ? "แม่นยำ." : "Precision."}
             </h2>
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <h2 className="reveal-text text-5xl md:text-8xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-b from-blue-400 to-blue-400/40 tracking-tight opacity-0">
+            <h2 className="reveal-text text-5xl md:text-8xl font-display font-bold text-blue-500 tracking-tight opacity-0">
               {language === "th" ? "ชาญฉลาด." : "Intelligence."}
             </h2>
           </div>
            <div className="absolute inset-0 flex items-center justify-center">
-            <h2 className="reveal-text text-5xl md:text-8xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-b from-purple-400 to-purple-400/40 tracking-tight opacity-0">
+            <h2 className="reveal-text text-5xl md:text-8xl font-display font-bold text-purple-500 tracking-tight opacity-0">
               {language === "th" ? "กำไร." : "Profit."}
             </h2>
           </div>
