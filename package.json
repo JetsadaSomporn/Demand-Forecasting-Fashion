@@ -9,12 +9,14 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.2.2",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.58.0",
     "chart.js": "^4.5.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "gsap": "^3.13.0",
     "lucide-react": "^0.544.0",
     "next": "15.5.4",
     "react": "19.1.0",
