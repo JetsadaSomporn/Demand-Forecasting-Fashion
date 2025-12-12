@@ -3,13 +3,18 @@
 import { useRef, useEffect } from 'react';
 import gsap from 'gsap';
 
+interface PhysicsState {
+  y: number;
+  targetY: number;
+}
+
 export default function InteractiveTitle({ title }: { title: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const charsRef = useRef<(HTMLSpanElement | null)[]>([]);
   
   // Physics state
   const mouse = useRef({ x: 0, y: 0, isActive: false });
-  const time = useRef(0);
+  const physicsRef = useRef<PhysicsState[]>([]);
 
   useEffect(() => {
     // Initialize character refs array
@@ -17,22 +22,17 @@ export default function InteractiveTitle({ title }: { title: string }) {
 
     // Physics constants
     const FRICTION = 0.08; // Viscosity: Lower = slower/heavier liquid
-    const IDLE_AMPLITUDE = 8; // Height of the idle wave
-    const IDLE_SPEED = 0.03; // Speed of the idle wave
     const MOUSE_RADIUS = 200; // Radius of influence
     const MOUSE_STRENGTH = 120; // How much the mouse pushes the water
     const BLUR_STRENGTH = 0.25; // How blurry it gets when moving
 
-    // Current state storage (to avoid reading DOM)
-    const physics = title.split('').map(() => ({
+    // Initialize physics state for each character
+    physicsRef.current = title.split('').map(() => ({
       y: 0,
       targetY: 0,
-      vx: 0
     }));
 
     const updatePhysics = () => {
-      time.current += IDLE_SPEED;
-
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
 
@@ -42,10 +42,9 @@ export default function InteractiveTitle({ title }: { title: string }) {
         // 1. Calculate Target Y (Where the letter wants to go)
         // ----------------------------------------------------
         
-        // A. Idle Ocean Swell (Sine Wave)
-        let targetY = Math.sin(time.current + i * 0.4) * IDLE_AMPLITUDE;
+        let targetY = 0; // Static by default
 
-        // B. Mouse Interaction (Repulsion/Attraction)
+        // Mouse Interaction (Repulsion/Attraction)
         if (mouse.current.isActive) {
           const charRect = char.getBoundingClientRect();
           const charCenterX = charRect.left + charRect.width / 2;
@@ -63,11 +62,7 @@ export default function InteractiveTitle({ title }: { title: string }) {
             // Calculate influence (0 to 1, Gaussian-ish)
             const influence = Math.pow(1 - dist / MOUSE_RADIUS, 2);
             
-            // Push letters DOWN/UP away from mouse Y
-            // If mouse is above letter, push down. If below, push up.
-            // but for a "wave" feel, we often just want it to rise or fall based on X proximity
-            
-            // Let's create a "Wake" effect: The mouse drags the water level up/down
+            // Wake effect: The mouse drags the water level up/down
             const relativeY = (mouseY - rect.top) - (rect.height / 2);
             targetY += -relativeY * influence * 1.5; // Magnetic vertical pull
           }
@@ -75,7 +70,7 @@ export default function InteractiveTitle({ title }: { title: string }) {
 
         // 2. Physics Simulation (Lerp)
         // ----------------------------------------------------
-        const p = physics[i];
+        const p = physicsRef.current[i];
         
         // Smoothly interpolate current Y towards target Y
         const diff = targetY - p.y;
@@ -120,6 +115,14 @@ export default function InteractiveTitle({ title }: { title: string }) {
 
   const handleMouseLeave = () => {
     mouse.current.isActive = false;
+    // When mouse leaves, ensure all letters eventually settle to y:0 and no blur
+    charsRef.current.forEach((char, i) => {
+      if (char) {
+        // Animate the physics state back to 0
+        gsap.to(physicsRef.current[i], { y: 0, duration: 0.8, ease: 'power2.out' }); 
+        gsap.to(char, { filter: 'none', opacity: 1, duration: 0.8 }); // Animate blur/opacity away
+      }
+    });
   };
 
   return (
