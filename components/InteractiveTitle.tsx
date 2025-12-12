@@ -1,113 +1,125 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import gsap from 'gsap';
-import { useGSAP } from '@gsap/react';
 
 export default function InteractiveTitle({ title }: { title: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const charsRef = useRef<(HTMLSpanElement | null)[]>([]);
+  
+  // Physics state
+  const mouse = useRef({ x: 0, y: 0, isActive: false });
+  const time = useRef(0);
 
-  // Split title into characters
-  const chars = title.split('');
+  useEffect(() => {
+    // Initialize character refs array
+    charsRef.current = charsRef.current.slice(0, title.length);
 
-  useGSAP(
-    () => {
-      // Entrance Animation: Staggered pop-up with elastic settle
-      gsap.fromTo(
-        charsRef.current,
-        { 
-          y: 100, 
-          opacity: 0,
-          scale: 0.5 
-        },
-        {
-          y: 0,
-          opacity: 1,
-          scale: 1,
-          stagger: 0.04,
-          duration: 1.5,
-          ease: 'elastic.out(1, 0.5)',
-          delay: 0.2,
+    // Physics constants
+    const FRICTION = 0.08; // Viscosity: Lower = slower/heavier liquid
+    const IDLE_AMPLITUDE = 8; // Height of the idle wave
+    const IDLE_SPEED = 0.03; // Speed of the idle wave
+    const MOUSE_RADIUS = 200; // Radius of influence
+    const MOUSE_STRENGTH = 120; // How much the mouse pushes the water
+    const BLUR_STRENGTH = 0.25; // How blurry it gets when moving
+
+    // Current state storage (to avoid reading DOM)
+    const physics = title.split('').map(() => ({
+      y: 0,
+      targetY: 0,
+      vx: 0
+    }));
+
+    const updatePhysics = () => {
+      time.current += IDLE_SPEED;
+
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+
+      charsRef.current.forEach((char, i) => {
+        if (!char) return;
+
+        // 1. Calculate Target Y (Where the letter wants to go)
+        // ----------------------------------------------------
+        
+        // A. Idle Ocean Swell (Sine Wave)
+        let targetY = Math.sin(time.current + i * 0.4) * IDLE_AMPLITUDE;
+
+        // B. Mouse Interaction (Repulsion/Attraction)
+        if (mouse.current.isActive) {
+          const charRect = char.getBoundingClientRect();
+          const charCenterX = charRect.left + charRect.width / 2;
+          const charCenterY = charRect.top + charRect.height / 2;
+
+          // Mouse position relative to viewport
+          const mouseX = mouse.current.x;
+          const mouseY = mouse.current.y;
+
+          const dx = mouseX - charCenterX;
+          const dy = mouseY - charCenterY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < MOUSE_RADIUS) {
+            // Calculate influence (0 to 1, Gaussian-ish)
+            const influence = Math.pow(1 - dist / MOUSE_RADIUS, 2);
+            
+            // Push letters DOWN/UP away from mouse Y
+            // If mouse is above letter, push down. If below, push up.
+            // but for a "wave" feel, we often just want it to rise or fall based on X proximity
+            
+            // Let's create a "Wake" effect: The mouse drags the water level up/down
+            const relativeY = (mouseY - rect.top) - (rect.height / 2);
+            targetY += -relativeY * influence * 1.5; // Magnetic vertical pull
+          }
         }
-      );
-    },
-    { scope: containerRef }
-  );
+
+        // 2. Physics Simulation (Lerp)
+        // ----------------------------------------------------
+        const p = physics[i];
+        
+        // Smoothly interpolate current Y towards target Y
+        const diff = targetY - p.y;
+        p.y += diff * FRICTION;
+
+        // 3. Render
+        // ----------------------------------------------------
+        
+        // Velocity-based Blur (The "Liquid" Look)
+        // We calculate velocity based on the difference we just moved
+        const velocity = Math.abs(diff); 
+        const blur = Math.min(velocity * BLUR_STRENGTH, 15); // Cap blur at 15px
+
+        // Apply styles directly for performance (bypassing React render cycle)
+        char.style.transform = `translate3d(0, ${p.y}px, 0)`;
+        
+        // Only apply blur if it's significant (optimization)
+        if (blur > 0.5) {
+          char.style.filter = `blur(${blur}px)`;
+          char.style.opacity = `${1 - blur * 0.03}`; // Slight fade on fast movement
+        } else {
+          char.style.filter = 'none';
+          char.style.opacity = '1';
+        }
+      });
+    };
+
+    // Add listener
+    gsap.ticker.add(updatePhysics);
+
+    // Cleanup
+    return () => {
+      gsap.ticker.remove(updatePhysics);
+    };
+  }, [title]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-
-    const rect = containerRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left; // Mouse X relative to container
-
-    // Animate each character based on distance from mouse
-    charsRef.current.forEach((char, index) => {
-      if (!char) return;
-
-      const charRect = char.getBoundingClientRect();
-      const charCenter = charRect.left + charRect.width / 2 - rect.left;
-      
-      // Calculate distance (absolute value)
-      const dist = Math.abs(mouseX - charCenter);
-      
-      // Configuration for the wave effect
-      const hoverRadius = 250; // How wide the wave is
-      const maxDisplacement = -60; // How high the letters jump (negative is up)
-      const maxScale = 1.35; // How big they get
-      const maxRotate = 15; // Rotation spread
-
-      if (dist < hoverRadius) {
-        // Calculate intensity (0 to 1) based on distance (Gaussian-ish falloff)
-        const intensity = 1 - Math.pow(dist / hoverRadius, 2);
-        
-        const y = maxDisplacement * intensity;
-        const scale = 1 + (maxScale - 1) * intensity;
-        
-        // Rotate slightly away from center of wave
-        const rotate = (charCenter < mouseX ? -1 : 1) * maxRotate * intensity;
-
-        gsap.to(char, {
-          y: y,
-          scale: scale,
-          rotate: rotate,
-          color: '#ffffff', // Keep white, or optional subtle tint
-          textShadow: `0 0 ${20 * intensity}px rgba(255,255,255,0.8)`, // Bloom effect
-          duration: 0.1, // Super fast response
-          overwrite: 'auto',
-          ease: 'power2.out',
-        });
-      } else {
-        // Return to neutral if outside radius
-        gsap.to(char, {
-          y: 0,
-          scale: 1,
-          rotate: 0,
-          textShadow: '0 0 0px rgba(255,255,255,0)',
-          duration: 0.8, // Slower settle
-          overwrite: 'auto',
-          ease: 'elastic.out(1, 0.3)', // Bouncy elastic return
-        });
-      }
-    });
+    mouse.current.x = e.clientX;
+    mouse.current.y = e.clientY;
+    mouse.current.isActive = true;
   };
 
   const handleMouseLeave = () => {
-    // Reset all characters with a satisfying elastic wobble
-    if (!charsRef.current) return;
-    
-    gsap.to(charsRef.current, {
-      y: 0,
-      scale: 1,
-      rotate: 0,
-      textShadow: '0 0 0px rgba(255,255,255,0)',
-      duration: 1.2,
-      ease: 'elastic.out(1, 0.3)',
-      stagger: {
-        amount: 0.1,
-        from: 'center'
-      }
-    });
+    mouse.current.isActive = false;
   };
 
   return (
@@ -115,16 +127,16 @@ export default function InteractiveTitle({ title }: { title: string }) {
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="relative inline-flex cursor-default select-none justify-center overflow-visible py-20"
+      className="relative inline-flex cursor-default select-none justify-center overflow-visible py-32" // Increased padding for wave height
     >
       <h1 className="font-display text-[clamp(3.5rem,12vw,11rem)] font-bold uppercase tracking-[0.08em] text-[#ffffff] sm:text-[clamp(4rem,11vw,11rem)]">
-        {chars.map((char, i) => (
+        {title.split('').map((char, i) => (
           <span
             key={i}
             ref={(el) => {
               charsRef.current[i] = el;
             }}
-            className="inline-block origin-bottom will-change-transform"
+            className="inline-block will-change-transform"
             style={{ 
               position: 'relative',
               display: 'inline-block',
