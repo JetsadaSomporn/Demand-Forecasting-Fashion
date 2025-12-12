@@ -20,7 +20,7 @@ export default function LandingClient({
   const { t, language } = useTranslation();
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-black text-white font-sans selection:bg-blue-500/30">
+    <div className="relative h-screen w-full overflow-hidden bg-black text-[#ffffff] font-sans selection:bg-blue-500/30">
       
       {/* Fixed Background Video with Heavy Overlay */}
       <div className="absolute inset-0 z-0 h-full w-full">
@@ -39,18 +39,18 @@ export default function LandingClient({
 
       {/* Header */}
       <header className="absolute top-0 left-0 z-50 flex w-full items-center justify-between px-6 py-6">
-        <Link href="/" className="font-display text-sm tracking-[0.2em] uppercase text-white/90 hover:text-white transition-colors">
+        <Link href="/" className="font-display text-sm tracking-[0.2em] uppercase text-[#ffffff]/90 hover:text-[#ffffff] transition-colors">
           {t("common.brand")}
         </Link>
         <div className="hidden flex-1 items-center justify-center md:flex">
-          <Navigation items={navItems} />
+          <Navigation items={navItems} forceWhite={true} />
         </div>
         <div className="flex items-center gap-4 text-[11px] uppercase tracking-[0.2em]">
-          <span className="hidden sm:inline text-white/70">{accountLabel}</span>
+          <span className="hidden sm:inline text-[#ffffff]/70">{accountLabel}</span>
           <Link
             href={isAuthenticated ? "/logout" : "/login"}
             prefetch={false}
-            className="hover:text-white text-white/60 transition-colors"
+            className="hover:text-[#ffffff] text-[#ffffff]/60 transition-colors"
           >
             {t(isAuthenticated ? "common.signOut" : "common.signIn")}
           </Link>
@@ -63,7 +63,7 @@ export default function LandingClient({
           
           <InteractiveTitle title="Forecast" />
           
-          <p className="max-w-xl text-lg md:text-2xl font-light text-white/80 leading-relaxed tracking-wide">
+          <p className="max-w-xl text-lg md:text-2xl font-light text-[#ffffff]/80 leading-relaxed tracking-wide">
             {language === "th"
               ? "อนาคตของการพยากรณ์ อยู่ในมือคุณ"
               : "The future of demand forecasting. Redefined."}
@@ -72,13 +72,13 @@ export default function LandingClient({
           <div className="mt-4 flex items-center gap-6">
              <Link
               href="/forecast"
-              className="group relative inline-flex h-[44px] min-w-[160px] items-center justify-center rounded-full bg-blue-600 px-8 text-sm font-medium text-white transition-all hover:bg-blue-500 hover:scale-105 shadow-[0_0_40px_rgba(37,99,235,0.4)]"
+              className="group relative inline-flex h-[44px] min-w-[160px] items-center justify-center rounded-full bg-blue-600 px-8 text-sm font-medium text-[#ffffff] transition-all hover:bg-blue-500 hover:scale-105 shadow-[0_0_40px_rgba(37,99,235,0.4)]"
             >
               {language === "th" ? "เริ่มต้น" : "Get Started"}
             </Link>
              <Link
               href="/settings"
-              className="text-sm text-white/60 hover:text-white transition-colors"
+              className="text-sm text-[#ffffff]/60 hover:text-[#ffffff] transition-colors"
             >
               {language === "th" ? "เรียนรู้เพิ่มเติม >" : "Learn more >"}
             </Link>
@@ -88,14 +88,14 @@ export default function LandingClient({
 
       {/* Minimal Footer - Fixed Bottom */}
       <footer className="absolute bottom-6 left-0 w-full z-20">
-        <div className="mx-auto flex w-full max-w-7xl flex-col md:flex-row items-center justify-between px-6 text-[11px] text-white/40">
+        <div className="mx-auto flex w-full max-w-7xl flex-col md:flex-row items-center justify-between px-6 text-[11px] text-[#ffffff]/40">
           <div className="mb-2 md:mb-0">
             Copyright © 2025 Fashion Demand Forecast.
           </div>
           <div className="flex gap-6">
-            <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="#" className="hover:text-white transition-colors">Terms of Use</Link>
-            <Link href="#" className="hover:text-white transition-colors">Contact</Link>
+            <Link href="#" className="hover:text-[#ffffff] transition-colors">Privacy Policy</Link>
+            <Link href="#" className="hover:text-[#ffffff] transition-colors">Terms of Use</Link>
+            <Link href="#" className="hover:text-[#ffffff] transition-colors">Contact</Link>
           </div>
         </div>
       </footer>

@@ -9,7 +9,7 @@ type NavItem = {
   label: string;
 };
 
-export default function Navigation({ items }: { items: NavItem[] }) {
+export default function Navigation({ items, forceWhite }: { items: NavItem[]; forceWhite?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -22,10 +22,11 @@ export default function Navigation({ items }: { items: NavItem[] }) {
             href={item.href}
             className={clsx(
               "relative px-2 py-1 transition",
-              "text-foreground/50 hover:text-foreground",
-              "before:absolute before:left-0 before:right-0 before:-bottom-[6px] before:h-[2px] before:origin-center before:scale-x-0 before:bg-foreground before:transition-transform before:duration-300",
+              forceWhite ? "text-[#ffffff]/50 hover:text-[#ffffff]" : "text-foreground/50 hover:text-foreground",
+              "before:absolute before:left-0 before:right-0 before:-bottom-[6px] before:h-[2px] before:origin-center before:scale-x-0 before:transition-transform before:duration-300",
+              forceWhite ? "before:bg-[#ffffff]" : "before:bg-foreground",
               "hover:before:scale-x-100",
-              isActive && "text-foreground before:scale-x-100"
+              isActive && (forceWhite ? "text-[#ffffff]" : "text-foreground") + " before:scale-x-100"
             )}
           >
             {item.label}

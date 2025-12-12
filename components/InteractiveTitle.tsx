@@ -28,7 +28,7 @@ export default function InteractiveTitle({ title }: { title: string }) {
       onMouseEnter={() => setIsActive(true)}
       onMouseLeave={() => setIsActive(false)}
     >
-      <h1 className="relative font-display text-[clamp(3.5rem,12vw,11rem)] uppercase tracking-[0.08em] text-white drop-shadow-[0_40px_80px_rgba(0,0,0,0.45)] select-none sm:text-[clamp(4rem,11vw,11rem)]">
+      <h1 className="relative font-display text-[clamp(3.5rem,12vw,11rem)] uppercase tracking-[0.08em] text-[#ffffff] drop-shadow-[0_40px_80px_rgba(0,0,0,0.45)] select-none sm:text-[clamp(4rem,11vw,11rem)]">
         {title}
       </h1>
       
@@ -44,7 +44,7 @@ export default function InteractiveTitle({ title }: { title: string }) {
               WebkitMaskImage: `radial-gradient(circle 140px at ${cursorPosition.x}px ${cursorPosition.y}px, black 20%, transparent 80%)`,
             }}
           >
-            <h1 className="font-display text-[clamp(3.5rem,12vw,11rem)] uppercase tracking-[0.08em] text-white drop-shadow-[0_40px_80px_rgba(0,0,0,0.45)] sm:text-[clamp(4rem,11vw,11rem)]">
+            <h1 className="font-display text-[clamp(3.5rem,12vw,11rem)] uppercase tracking-[0.08em] text-[#ffffff] drop-shadow-[0_40px_80px_rgba(0,0,0,0.45)] sm:text-[clamp(4rem,11vw,11rem)]">
               {title}
             </h1>
           </div>
@@ -72,28 +72,28 @@ export default function InteractiveTitle({ title }: { title: string }) {
           >
             {/* คลื่นวงแรก */}
             <div 
-              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/60"
+              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#ffffff]/60"
               style={{
                 animation: 'ripple 2s ease-out forwards',
               }}
             />
             {/* คลื่นวงสอง */}
             <div 
-              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40"
+              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#ffffff]/40"
               style={{
                 animation: 'ripple 2s ease-out 0.3s forwards',
               }}
             />
             {/* คลื่นวงสาม */}
             <div 
-              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/25"
+              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#ffffff]/25"
               style={{
                 animation: 'ripple 2s ease-out 0.6s forwards',
               }}
             />
             {/* Background glow */}
             <div 
-              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20 blur-md"
+              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#ffffff]/20 blur-md"
               style={{
                 animation: 'ripple-glow 2s ease-out forwards',
               }}
