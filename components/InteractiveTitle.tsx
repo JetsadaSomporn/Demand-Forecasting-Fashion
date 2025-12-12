@@ -1,9 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
-'use client';
-
 import { useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -11,8 +7,8 @@ import { useGSAP } from '@gsap/react';
 export default function InteractiveTitle({ title }: { title: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const blurLayerRef = useRef<HTMLHeadingElement>(null);
-  const xTo = useRef<gsap.QuickToFunc>();
-  const yTo = useRef<gsap.QuickToFunc>();
+  const xTo = useRef<gsap.QuickToFunc | null>(null);
+  const yTo = useRef<gsap.QuickToFunc | null>(null);
 
   useGSAP(
     () => {
