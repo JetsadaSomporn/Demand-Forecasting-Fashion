@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { getLlamaChatStream } from "@/lib/llm";
+import { getLlamaChatStream, ChatMessage } from "@/lib/llm";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const { messages, sessionId } = await request.json();
+    const { messages, sessionId, isReasoning } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: "Messages array is required" }, { status: 400 });
@@ -22,7 +22,6 @@ export async function POST(request: Request) {
     let useMemory = true;
     
     if (user) {
-        // Create session if needed
         if (!currentSessionId) {
             const firstMessage = messages.find((m: any) => m.role === 'user')?.content || "New Chat";
             const title = firstMessage.slice(0, 50) + (firstMessage.length > 50 ? "..." : "");
@@ -41,7 +40,6 @@ export async function POST(request: Request) {
             }
         }
 
-        // Save User Message
         const lastMsg = messages[messages.length - 1];
         if (lastMsg && lastMsg.role === 'user') {
              await supabase.from('chat_messages').insert({
@@ -51,7 +49,6 @@ export async function POST(request: Request) {
              });
         }
 
-        // Fetch Memory Setting
         try {
             const { data: settings } = await supabase
                 .from('settings')
@@ -67,14 +64,15 @@ export async function POST(request: Request) {
         }
     }
 
-    // 2. Prepare Context (Memory Handling)
-    let llmMessages = [...messages];
+    // 2. Prepare Context & Reasoning
+    let llmMessages: ChatMessage[] = [...messages];
     
     if (!useMemory) {
         const lastMsg = messages[messages.length - 1];
         llmMessages = [lastMsg];
     }
 
+    // Handle User Memories if memory is ON
     if (user && useMemory) {
          try {
              const { data: memories } = await supabase
@@ -84,27 +82,40 @@ export async function POST(request: Request) {
                 .limit(10);
              
              if (memories && memories.length > 0) {
-                 const memoryContext = "You have access to the following long-term memories about the user:\n" + 
-                                     memories.map(m => `- ${m.memory_text}`).join('\n') + 
-                                     "\n\nUse this information to personalize your response if relevant.";
-                 
+                 const memoryContext = "Long-term memories:\n" + memories.map(m => `- ${m.memory_text}`).join('\n') + "\n\n";
                  llmMessages = [{ role: 'system', content: memoryContext }, ...llmMessages];
              }
-         } catch (err) {
-             console.warn("Failed to fetch memories", err);
-         }
+         } catch (err) {}
+    }
+
+    // Apply Reasoning Mode
+    const options: any = {
+        model: "nvidia/llama-3.1-nemotron-ultra-253b-v1"
+    };
+
+    if (isReasoning) {
+        // As per user snippet: "detailed thinking on" triggers reasoning
+        llmMessages = [{ role: 'system', content: "detailed thinking on" }, ...llmMessages];
+        options.temperature = 0.6;
+        options.topP = 0.95;
+        options.maxTokens = 4096;
+        options.frequencyPenalty = 0;
+        options.presencePenalty = 0;
+    } else {
+        options.temperature = 0.7;
+        options.topP = 0.9;
+        options.maxTokens = 1024;
     }
 
     // 3. Call LLM
-    const response = await getLlamaChatStream(llmMessages);
+    const response = await getLlamaChatStream(llmMessages, options);
     if (!response || !response.body) {
        return NextResponse.json({ error: "Failed to generate response" }, { status: 500 });
     }
 
-    // 4. Transform Stream for Client + DB
+    // 4. Transform Stream
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
-    
     let fullResponse = "";
     let buffer = "";
 
@@ -125,27 +136,11 @@ export async function POST(request: Request) {
                         fullResponse += content;
                         controller.enqueue(encoder.encode(content));
                     }
-                } catch (e) {
-                    // ignore parse errors
-                }
+                } catch (e) {}
             }
         }
       },
       async flush(controller) {
-          if (buffer) {
-             const lines = buffer.split('\n');
-             for (const line of lines) {
-                 const trimmed = line.trim();
-                 if (trimmed.startsWith("data: ")) {
-                     try {
-                         const json = JSON.parse(trimmed.slice(6));
-                         const content = json.choices?.[0]?.delta?.content;
-                         if (content) { fullResponse += content; controller.enqueue(encoder.encode(content)); }
-                     } catch(e) {}
-                 }
-             }
-          }
-
           if (user && currentSessionId && fullResponse) {
               await supabase.from('chat_messages').insert({
                  session_id: currentSessionId,
@@ -167,9 +162,6 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error("[Neural API] Error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -6,6 +6,8 @@ export type LlamaOptions = {
   temperature?: number;
   topP?: number;
   model?: string;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
 };
 
 export type ChatMessage = {
@@ -124,6 +126,8 @@ export async function getLlamaChatStream(messages: ChatMessage[], options: Llama
     temperature = 0.7,
     topP = 0.9,
     model = "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+    frequencyPenalty = 0,
+    presencePenalty = 0,
   } = options;
 
   try {
@@ -139,6 +143,8 @@ export async function getLlamaChatStream(messages: ChatMessage[], options: Llama
         temperature,
         top_p: topP,
         max_tokens: maxTokens,
+        frequency_penalty: frequencyPenalty,
+        presence_penalty: presencePenalty,
         stream: true,
       }),
     });

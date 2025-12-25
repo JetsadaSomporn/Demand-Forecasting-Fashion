@@ -153,10 +153,6 @@ export default function NeuralPage() {
         fullContent += "\n\n" + files.map(f => `--- File: ${f.name} ---\n${f.content}\n--- End File ---`).join("\n\n");
     }
 
-    if (isReasoning) {
-        fullContent = "[Reasoning Mode: Enabled. Please think step-by-step and provide a detailed, logical analysis.]\n\n" + fullContent;
-    }
-
     const userMessage: Message = { role: "user", content: fullContent };
     const currentMessages = [...messages, userMessage];
     
@@ -176,7 +172,11 @@ export default function NeuralPage() {
       const response = await fetch("/api/neural", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: currentMessages, sessionId }),
+        body: JSON.stringify({
+            messages: currentMessages, 
+            sessionId,
+            isReasoning 
+        }),
         signal: controller.signal
       });
 
@@ -348,7 +348,7 @@ export default function NeuralPage() {
                                 msg.role === "user" ? "bg-[#27272a] text-white px-5 py-3 rounded-2xl" : "text-white/90"
                             )}>
                                 {msg.role === "user" ? (
-                                    <div className="whitespace-pre-wrap text-[15px] font-light">{msg.content.replace(/\n\n/, "")}</div>
+                                    <div className="whitespace-pre-wrap text-[15px] font-light">{msg.content}</div>
                                 ) : (
                                     <div className="prose prose-invert prose-sm max-w-none prose-p:leading-7 prose-headings:font-medium prose-pre:bg-[#18181b] prose-pre:border prose-pre:border-white/10 prose-code:text-blue-300">
                                         <ReactMarkdown>{msg.content}</ReactMarkdown>
@@ -424,7 +424,7 @@ export default function NeuralPage() {
                                 className={clsx(
                                     "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border",
                                     isReasoning 
-                                        ? "bg-blue-500/10 text-blue-400 border-blue-500/20" 
+                                        ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
                                         : "bg-transparent text-white/40 border-transparent hover:bg-white/5 hover:text-white/80"
                                 )}
                                 title="Toggle Reasoning Model"
