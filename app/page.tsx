@@ -23,6 +23,7 @@ export default async function LandingPage() {
   const navItems = [
     { href: "/forecast", label: translator.t("nav.forecast") },
     { href: "/history", label: translator.t("nav.history") },
+    { href: "/neural", label: translator.t("nav.neural") },
     { href: "/settings", label: translator.t("nav.settings") },
   ];
 
