@@ -70,10 +70,10 @@ export async function callLlamaChat(messages: ChatMessage[], options: LlamaOptio
   }
 
   const {
-    maxTokens = 1024, // Increased default for chat
-    temperature = 0.7, // Higher creativity for chat
+    maxTokens = 1024,
+    temperature = 0.7,
     topP = 0.9,
-    model = "meta/llama-3.3-70b-instruct",
+    model = "nvidia/llama-3.1-nemotron-ultra-253b-v1",
   } = options;
 
   try {
@@ -107,6 +107,49 @@ export async function callLlamaChat(messages: ChatMessage[], options: LlamaOptio
     }
 
     return content;
+  } catch (error) {
+    console.error("[LLM] Request error:", error);
+    return null;
+  }
+}
+
+export async function getLlamaChatStream(messages: ChatMessage[], options: LlamaOptions = {}) {
+  if (!NVIDIA_API_KEY) {
+    console.warn("[LLM] NVIDIA_API_KEY is not configured");
+    return null;
+  }
+
+  const {
+    maxTokens = 1024,
+    temperature = 0.7,
+    topP = 0.9,
+    model = "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+  } = options;
+
+  try {
+    const response = await fetch(NVIDIA_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${NVIDIA_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature,
+        top_p: topP,
+        max_tokens: maxTokens,
+        stream: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[LLM] API error:", response.status, errorText);
+      return null;
+    }
+
+    return response;
   } catch (error) {
     console.error("[LLM] Request error:", error);
     return null;
