@@ -7,6 +7,7 @@ import { settingsSchema, type SettingsFormValues } from "@/lib/validators";
 import { useTranslation } from "@/lib/i18n/client";
 import type { Language } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme/client";
+import { BrainCircuit } from "lucide-react";
 
 const timezones = [
   "UTC",
@@ -213,11 +214,31 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
                 );
               })}
             </div>
-            {errors.theme ? (
-              <p className="text-xs text-red-500">
-                {translateError(errors.theme.message)}
-              </p>
-            ) : null}
+          </section>
+
+          {/* Neural Memory Section */}
+          <section className="space-y-4">
+             <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-5 transition hover:bg-white/8">
+                <div className="flex items-start gap-4">
+                   <div className="rounded-full bg-purple-500/20 p-2 text-purple-300">
+                     <BrainCircuit className="h-5 w-5" />
+                   </div>
+                   <div>
+                     <h3 className={labelClassName}>Neural Memory</h3>
+                     <p className="mt-1 max-w-sm text-sm leading-relaxed text-white/60">
+                       Allow Neural to remember context from previous conversations and learned facts.
+                     </p>
+                   </div>
+                </div>
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    {...register("useMemory")} 
+                  />
+                  <div className="h-6 w-11 rounded-full bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent/50 peer-checked:bg-accent peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+             </div>
           </section>
 
           <section className="grid gap-6 sm:grid-cols-2">

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
-import { Send, Sparkles, User, StopCircle, Menu, MessageSquare, Plus, Paperclip, Brain, X, FileText, BrainCircuit } from "lucide-react";
+import { Send, Sparkles, User, StopCircle, Menu, MessageSquare, Plus, Paperclip, Brain, X, FileText } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/client";
 import ReactMarkdown from "react-markdown";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
@@ -34,7 +34,6 @@ export default function NeuralPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isReasoning, setIsReasoning] = useState(false);
-  const [isMemory, setIsMemory] = useState(true);
   const [files, setFiles] = useState<AttachedFile[]>([]);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
@@ -177,7 +176,7 @@ export default function NeuralPage() {
       const response = await fetch("/api/neural", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: currentMessages, sessionId, useMemory: isMemory }),
+        body: JSON.stringify({ messages: currentMessages, sessionId }),
         signal: controller.signal
       });
 
@@ -432,20 +431,6 @@ export default function NeuralPage() {
                               >
                                   <Brain className="h-3.5 w-3.5" />
                                   <span>Reasoning</span>
-                              </button>
-                              
-                              <button 
-                                onClick={() => setIsMemory(!isMemory)}
-                                className={clsx(
-                                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border",
-                                    isMemory 
-                                        ? "bg-purple-500/10 text-purple-400 border-purple-500/20" 
-                                        : "bg-transparent text-white/40 border-transparent hover:bg-white/5 hover:text-white/80"
-                                )}
-                                title="Toggle Memory (Context)"
-                              >
-                                  <BrainCircuit className="h-3.5 w-3.5" />
-                                  <span>Memory</span>
                               </button>
                           </div>
 

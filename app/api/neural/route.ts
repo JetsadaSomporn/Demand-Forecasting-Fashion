@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const { messages, sessionId, useMemory = true } = await request.json();
+    const { messages, sessionId } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: "Messages array is required" }, { status: 400 });
@@ -18,10 +18,12 @@ export async function POST(request: Request) {
 
     let currentSessionId = sessionId;
     
-    // Only persist if user is logged in
+    // Fetch user preferences (Memory)
+    let useMemory = true;
+    
     if (user) {
+        // Create session if needed
         if (!currentSessionId) {
-            // Create new session
             const firstMessage = messages.find((m: any) => m.role === 'user')?.content || "New Chat";
             const title = firstMessage.slice(0, 50) + (firstMessage.length > 50 ? "..." : "");
             
@@ -39,7 +41,7 @@ export async function POST(request: Request) {
             }
         }
 
-        // Save User Message (the last one)
+        // Save User Message
         const lastMsg = messages[messages.length - 1];
         if (lastMsg && lastMsg.role === 'user') {
              await supabase.from('chat_messages').insert({
@@ -48,33 +50,44 @@ export async function POST(request: Request) {
                  content: lastMsg.content
              });
         }
+
+        // Fetch Memory Setting
+        try {
+            const { data: settings } = await supabase
+                .from('settings')
+                .select('use_memory')
+                .limit(1)
+                .maybeSingle();
+            
+            if (settings && settings.use_memory !== null && settings.use_memory !== undefined) {
+                useMemory = settings.use_memory;
+            }
+        } catch (e) {
+            console.warn("Failed to fetch memory settings", e);
+        }
     }
 
     // 2. Prepare Context (Memory Handling)
     let llmMessages = [...messages];
     
-    // Logic: If Memory OFF, we only send the *last* user message (and system prompt if exists).
-    // We strip the previous conversation history from the LLM context window.
     if (!useMemory) {
         const lastMsg = messages[messages.length - 1];
         llmMessages = [lastMsg];
     }
 
-    // Logic: If Memory ON, fetch User Memories (Long Term)
     if (user && useMemory) {
          try {
              const { data: memories } = await supabase
                 .from('user_memories')
                 .select('memory_text')
                 .eq('user_id', user.id)
-                .limit(10); // Limit to avoid context overflow
+                .limit(10);
              
              if (memories && memories.length > 0) {
                  const memoryContext = "You have access to the following long-term memories about the user:\n" + 
                                      memories.map(m => `- ${m.memory_text}`).join('\n') + 
                                      "\n\nUse this information to personalize your response if relevant.";
                  
-                 // Inject as system message at the start
                  llmMessages = [{ role: 'system', content: memoryContext }, ...llmMessages];
              }
          } catch (err) {
@@ -133,7 +146,6 @@ export async function POST(request: Request) {
              }
           }
 
-          // Save Assistant Message to DB
           if (user && currentSessionId && fullResponse) {
               await supabase.from('chat_messages').insert({
                  session_id: currentSessionId,
