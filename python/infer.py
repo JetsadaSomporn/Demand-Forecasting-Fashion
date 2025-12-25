@@ -363,18 +363,33 @@ def create_features(payload: dict, model_key: str, horizon: int) -> pd.DataFrame
         
         # For lgbm_full (historical model), add lag/roll/ema features
         if model_key == "lgbm_full":
+            # Precompute once per row (avoid repeated add_months()/dict lookups)
+            lags = [log_qty_for_offset(pred_month_dt, offset) for offset in range(1, 13)]
+            lag1, lag2, lag3 = lags[0], lags[1], lags[2]
+            lag6, lag12 = lags[5], lags[11]
+
+            def ema_from_lags(window: int) -> float:
+                if not history_map or window <= 0:
+                    return 0.0
+                values = lags[window - 1 :: -1]  # offsets window..1 (oldest -> newest)
+                alpha = 2 / (window + 1)
+                ema_value = values[0]
+                for value in values[1:]:
+                    ema_value = alpha * value + (1 - alpha) * ema_value
+                return float(ema_value)
+
             row.update({
-                "lag1_logqty": log_qty_for_offset(pred_month_dt, 1),
-                "lag2_logqty": log_qty_for_offset(pred_month_dt, 2),
-                "lag3_logqty": log_qty_for_offset(pred_month_dt, 3),
-                "lag12_logqty": log_qty_for_offset(pred_month_dt, 12),
-                "roll3_mean_log": rolling_mean_log(pred_month_dt, 3),
-                "roll6_mean_log": rolling_mean_log(pred_month_dt, 6),
-                "roll12_mean_log": rolling_mean_log(pred_month_dt, 12),
-                "ema3_log": ema_log(pred_month_dt, 3),
-                "ema6_log": ema_log(pred_month_dt, 6),
-                "mom3": log_qty_for_offset(pred_month_dt, 1) - log_qty_for_offset(pred_month_dt, 3),
-                "mom6": log_qty_for_offset(pred_month_dt, 1) - log_qty_for_offset(pred_month_dt, 6),
+                "lag1_logqty": lag1,
+                "lag2_logqty": lag2,
+                "lag3_logqty": lag3,
+                "lag12_logqty": lag12,
+                "roll3_mean_log": float(np.mean(lags[:3])),
+                "roll6_mean_log": float(np.mean(lags[:6])),
+                "roll12_mean_log": float(np.mean(lags[:12])),
+                "ema3_log": ema_from_lags(3),
+                "ema6_log": ema_from_lags(6),
+                "mom3": lag1 - lag3,
+                "mom6": lag1 - lag6,
             })
         
         rows.append(row)
@@ -562,8 +577,8 @@ def run_forecast(payload: dict) -> dict:
             
             start_dt = add_months(first_sale_dt, 1)
             month_labels = [
-                f"{add_months(start_dt, i).year:04d}-{add_months(start_dt, i).month:02d}"
-                for i in range(horizon)
+                f"{dt.year:04d}-{dt.month:02d}"
+                for dt in (add_months(start_dt, i) for i in range(horizon))
             ]
             
             # Get history for plot
