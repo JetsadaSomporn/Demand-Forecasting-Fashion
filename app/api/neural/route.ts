@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const { messages, sessionId } = await request.json();
+    const { messages, sessionId, useMemory = true } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: "Messages array is required" }, { status: 400 });
@@ -50,13 +50,45 @@ export async function POST(request: Request) {
         }
     }
 
-    // 2. Call LLM
-    const response = await getLlamaChatStream(messages);
+    // 2. Prepare Context (Memory Handling)
+    let llmMessages = [...messages];
+    
+    // Logic: If Memory OFF, we only send the *last* user message (and system prompt if exists).
+    // We strip the previous conversation history from the LLM context window.
+    if (!useMemory) {
+        const lastMsg = messages[messages.length - 1];
+        llmMessages = [lastMsg];
+    }
+
+    // Logic: If Memory ON, fetch User Memories (Long Term)
+    if (user && useMemory) {
+         try {
+             const { data: memories } = await supabase
+                .from('user_memories')
+                .select('memory_text')
+                .eq('user_id', user.id)
+                .limit(10); // Limit to avoid context overflow
+             
+             if (memories && memories.length > 0) {
+                 const memoryContext = "You have access to the following long-term memories about the user:\n" + 
+                                     memories.map(m => `- ${m.memory_text}`).join('\n') + 
+                                     "\n\nUse this information to personalize your response if relevant.";
+                 
+                 // Inject as system message at the start
+                 llmMessages = [{ role: 'system', content: memoryContext }, ...llmMessages];
+             }
+         } catch (err) {
+             console.warn("Failed to fetch memories", err);
+         }
+    }
+
+    // 3. Call LLM
+    const response = await getLlamaChatStream(llmMessages);
     if (!response || !response.body) {
        return NextResponse.json({ error: "Failed to generate response" }, { status: 500 });
     }
 
-    // 3. Transform Stream for Client + DB
+    // 4. Transform Stream for Client + DB
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
     
@@ -87,22 +119,18 @@ export async function POST(request: Request) {
         }
       },
       async flush(controller) {
-          // Process remaining buffer if any
           if (buffer) {
-            const lines = buffer.split('\n');
-            for (const line of lines) {
-                const trimmed = line.trim();
-                if (trimmed.startsWith("data: ")) {
-                    try {
-                        const json = JSON.parse(trimmed.slice(6));
-                        const content = json.choices?.[0]?.delta?.content;
-                        if (content) {
-                            fullResponse += content;
-                            controller.enqueue(encoder.encode(content));
-                        }
-                    } catch (e) {}
-                }
-            }
+             const lines = buffer.split('\n');
+             for (const line of lines) {
+                 const trimmed = line.trim();
+                 if (trimmed.startsWith("data: ")) {
+                     try {
+                         const json = JSON.parse(trimmed.slice(6));
+                         const content = json.choices?.[0]?.delta?.content;
+                         if (content) { fullResponse += content; controller.enqueue(encoder.encode(content)); }
+                     } catch(e) {}
+                 }
+             }
           }
 
           // Save Assistant Message to DB

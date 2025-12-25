@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
-import { Send, Sparkles, User, StopCircle, Menu, MessageSquare, Plus, Paperclip, Brain, X, FileText } from "lucide-react";
+import { Send, Sparkles, User, StopCircle, Menu, MessageSquare, Plus, Paperclip, Brain, X, FileText, BrainCircuit } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/client";
 import ReactMarkdown from "react-markdown";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
@@ -34,6 +34,7 @@ export default function NeuralPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isReasoning, setIsReasoning] = useState(false);
+  const [isMemory, setIsMemory] = useState(true);
   const [files, setFiles] = useState<AttachedFile[]>([]);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
@@ -42,7 +43,6 @@ export default function NeuralPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Auth Guard
   useEffect(() => {
     const checkAuth = async () => {
         try {
@@ -121,7 +121,7 @@ export default function NeuralPage() {
       if (e.target.files && e.target.files.length > 0) {
           const newFiles: AttachedFile[] = [];
           for (const file of Array.from(e.target.files)) {
-              if (file.size > 1024 * 1024) { // 1MB limit for text for now
+              if (file.size > 1024 * 1024) { 
                   alert(`File ${file.name} is too large (max 1MB for text analysis)`);
                   continue;
               }
@@ -137,7 +137,6 @@ export default function NeuralPage() {
               }
           }
           setFiles(prev => [...prev, ...newFiles]);
-          // Reset input
           if (fileInputRef.current) fileInputRef.current.value = "";
       }
   };
@@ -178,7 +177,7 @@ export default function NeuralPage() {
       const response = await fetch("/api/neural", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: currentMessages, sessionId }),
+        body: JSON.stringify({ messages: currentMessages, sessionId, useMemory: isMemory }),
         signal: controller.signal
       });
 
@@ -254,7 +253,6 @@ export default function NeuralPage() {
   return (
     <div className="flex h-screen bg-[#04040a] text-white font-sans overflow-hidden">
       
-      {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
             className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
@@ -262,7 +260,6 @@ export default function NeuralPage() {
         />
       )}
 
-      {/* Sidebar - Collapsible & Modern */}
       <aside className={clsx(
           "fixed inset-y-0 left-0 z-50 w-[260px] bg-[#09090b] border-r border-white/5 transform transition-transform duration-300 md:relative md:translate-x-0 flex flex-col",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -312,10 +309,8 @@ export default function NeuralPage() {
           </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col h-full relative">
           
-          {/* Header (Mobile Only) */}
           <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#04040a]/80 backdrop-blur-md sticky top-0 z-30">
               <button onClick={() => setIsSidebarOpen(true)}>
                   <Menu className="h-5 w-5 text-white/70" />
@@ -324,7 +319,6 @@ export default function NeuralPage() {
               <div className="w-5" />
           </div>
 
-          {/* Messages Area */}
           <div className="flex-1 overflow-y-auto scrollbar-hide relative">
             {messages.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center p-6 animate-in fade-in duration-700">
@@ -355,7 +349,7 @@ export default function NeuralPage() {
                                 msg.role === "user" ? "bg-[#27272a] text-white px-5 py-3 rounded-2xl" : "text-white/90"
                             )}>
                                 {msg.role === "user" ? (
-                                    <div className="whitespace-pre-wrap text-[15px] font-light">{msg.content.replace(/[Reasoning Mode:.*]\n\n/, "")}</div>
+                                    <div className="whitespace-pre-wrap text-[15px] font-light">{msg.content.replace(/\n\n/, "")}</div>
                                 ) : (
                                     <div className="prose prose-invert prose-sm max-w-none prose-p:leading-7 prose-headings:font-medium prose-pre:bg-[#18181b] prose-pre:border prose-pre:border-white/10 prose-code:text-blue-300">
                                         <ReactMarkdown>{msg.content}</ReactMarkdown>
@@ -381,11 +375,9 @@ export default function NeuralPage() {
             )}
           </div>
 
-          {/* Floating Input Area */}
           <div className="w-full px-4 pb-6 pt-2">
               <div className="max-w-3xl mx-auto">
                   
-                  {/* Attached Files Preview */}
                   {files.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-2 px-1">
                           {files.map((file, i) => (
@@ -440,6 +432,20 @@ export default function NeuralPage() {
                               >
                                   <Brain className="h-3.5 w-3.5" />
                                   <span>Reasoning</span>
+                              </button>
+                              
+                              <button 
+                                onClick={() => setIsMemory(!isMemory)}
+                                className={clsx(
+                                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border",
+                                    isMemory 
+                                        ? "bg-purple-500/10 text-purple-400 border-purple-500/20" 
+                                        : "bg-transparent text-white/40 border-transparent hover:bg-white/5 hover:text-white/80"
+                                )}
+                                title="Toggle Memory (Context)"
+                              >
+                                  <BrainCircuit className="h-3.5 w-3.5" />
+                                  <span>Memory</span>
                               </button>
                           </div>
 
