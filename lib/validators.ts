@@ -56,6 +56,7 @@ export const settingsSchema = z.object({
   useMemory: z.boolean().default(true),
 });
 
+export type SettingsFormInput = z.input<typeof settingsSchema>;
 export type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 export const imageExtractSchema = z.object({

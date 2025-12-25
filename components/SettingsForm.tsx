@@ -3,7 +3,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { settingsSchema, type SettingsFormValues } from "@/lib/validators";
+import {
+  settingsSchema,
+  type SettingsFormInput,
+  type SettingsFormValues,
+} from "@/lib/validators";
 import { useTranslation } from "@/lib/i18n/client";
 import type { Language } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme/client";
@@ -50,7 +54,7 @@ export default function SettingsForm({ defaults }: SettingsFormProps) {
     watch,
   formState: { errors, isSubmitting },
   getValues,
-  } = useForm<SettingsFormValues>({
+  } = useForm<SettingsFormInput>({
     resolver: zodResolver(settingsSchema),
     defaultValues: defaults,
   });
