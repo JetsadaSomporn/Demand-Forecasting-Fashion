@@ -284,11 +284,11 @@ export default function NeuralPage() {
                     {msg.role === "user" ? (
                         <p className="whitespace-pre-wrap font-light">{msg.content}</p>
                     ) : (
-                        <ReactMarkdown 
-                            className="prose prose-invert prose-sm max-w-none prose-p:leading-7 prose-headings:font-display prose-headings:font-medium prose-pre:bg-white/5 prose-pre:border prose-pre:border-white/10 prose-code:text-accent prose-code:font-normal prose-strong:text-white"
-                        >
-                            {msg.content}
-                        </ReactMarkdown>
+                        <div className="prose prose-invert prose-sm max-w-none prose-p:leading-7 prose-headings:font-display prose-headings:font-medium prose-pre:bg-white/5 prose-pre:border prose-pre:border-white/10 prose-code:text-accent prose-code:font-normal prose-strong:text-white">
+                            <ReactMarkdown>
+                                {msg.content}
+                            </ReactMarkdown>
+                        </div>
                     )}
                     </div>
                 </div>
