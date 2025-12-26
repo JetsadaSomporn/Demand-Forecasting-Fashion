@@ -357,7 +357,7 @@ export default function NeuralPage() {
                       )}
 
                       <div className="relative px-1">
-                        <textarea ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder={isReasoning ? "Ask complex questions..." : "How can I help you today?"} className="w-full bg-transparent border-none text-zinc-800 text-lg placeholder:text-zinc-300 focus:ring-0 resize-none min-h-[60px] max-h-48 py-2 pr-12 font-light" rows={1} />
+                        <textarea ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder={isReasoning ? "Ask complex questions..." : "How can I help you today?"} className="w-full bg-transparent border-none text-zinc-800 text-lg placeholder:text-zinc-300 focus:ring-0 focus:outline-none resize-none min-h-[60px] max-h-48 py-2 pr-12 font-light" rows={1} />
                         <div className="absolute bottom-1 right-0">
                             <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
                             <button onClick={() => input.trim() ? handleSubmit() : fileInputRef.current?.click()} className={clsx("p-2.5 rounded-xl transition-all flex items-center justify-center", input.trim() ? "bg-zinc-900 text-white shadow-lg active:scale-95" : "bg-zinc-100 text-zinc-400 hover:bg-zinc-200")}>
@@ -438,7 +438,7 @@ export default function NeuralPage() {
                                    ))}
                                </div>
                            )}
-                           <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Message Neural..." className="flex-1 bg-transparent border-none text-zinc-800 max-h-32 py-3 focus:ring-0 resize-none placeholder:text-zinc-400" rows={1} />
+                           <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Message Neural..." className="flex-1 bg-transparent border-none text-zinc-800 max-h-32 py-3 focus:ring-0 focus:outline-none resize-none placeholder:text-zinc-400" rows={1} />
                            <button onClick={() => handleSubmit()} className={clsx("p-3 rounded-full transition-all", input.trim() ? "bg-zinc-900 text-white shadow-md" : "bg-zinc-100 text-zinc-400")}>
                                <ArrowUp className="w-5 h-5" />
                            </button>
