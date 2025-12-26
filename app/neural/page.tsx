@@ -368,9 +368,21 @@ export default function NeuralPage() {
                             ))}
                         </div>
                      ) : (
-                        <p className="text-sm text-zinc-500 font-light max-w-xs leading-relaxed">
-                            No learned context yet. Start chatting to build memory.
-                        </p>
+                        <div className="flex flex-col gap-3 w-full max-w-sm">
+                            {[
+                                "Analyze current sales trends", 
+                                "Predict demand for next season", 
+                                "Identify underperforming categories"
+                            ].map((q, i) => (
+                                <button 
+                                    key={i}
+                                    onClick={() => setInput(q)}
+                                    className="text-left text-sm text-zinc-400 hover:text-white hover:bg-white/10 bg-white/5 border border-white/5 px-4 py-3 rounded-lg transition-all"
+                                >
+                                    {q}
+                                </button>
+                            ))}
+                        </div>
                      )}
                  </div>
              ) : (
@@ -381,12 +393,7 @@ export default function NeuralPage() {
                              msg.role === "user" ? "justify-end" : "justify-start"
                          )}>
                              
-                             {/* Assistant Avatar */}
-                             {msg.role === "assistant" && (
-                                 <div className="shrink-0 w-8 h-8 rounded-full bg-teal-500/10 flex items-center justify-center mt-1">
-                                     <Sparkles className="w-4 h-4 text-teal-400" />
-                                 </div>
-                             )}
+                             {/* Assistant Avatar - Removed for text-only minimalism */}
 
                              <div className={clsx(
                                  "relative max-w-2xl px-5 py-3.5 text-[15px] leading-7",
@@ -408,10 +415,8 @@ export default function NeuralPage() {
                          </div>
                      ))}
                      {isLoading && (
-                         <div className="flex w-full gap-4 justify-start">
-                             <div className="shrink-0 w-8 h-8 rounded-full bg-teal-500/10 flex items-center justify-center mt-1">
-                                 <Sparkles className="w-4 h-4 text-teal-400 animate-pulse" />
-                             </div>
+                         <div className="flex w-full gap-4 justify-start px-1">
+                             {/* Loading Indicator */}
                              <div className="flex items-center gap-1 h-8 px-2">
                                  <div className="w-1.5 h-1.5 bg-zinc-600 rounded-full animate-bounce [animation-delay:-0.3s]" />
                                  <div className="w-1.5 h-1.5 bg-zinc-600 rounded-full animate-bounce [animation-delay:-0.15s]" />
