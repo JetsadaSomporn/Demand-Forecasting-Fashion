@@ -224,6 +224,16 @@ export default function NeuralPage() {
         });
       }
 
+      // Background Memory Extraction
+      // We send the latest context to see if there's anything to learn
+      // This is "fire and forget" from the UI perspective
+      const finalContext = [...currentMessages, assistantMessage];
+      fetch("/api/neural/memory", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: finalContext })
+      }).catch(err => console.error("Memory extraction failed", err));
+
     } catch (error: any) {
       if (error.name !== 'AbortError') {
         console.error(error);
