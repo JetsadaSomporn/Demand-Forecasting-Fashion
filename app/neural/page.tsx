@@ -41,6 +41,7 @@ export default function NeuralPage() {
   const [isReasoning, setIsReasoning] = useState(false);
   const [files, setFiles] = useState<AttachedFile[]>([]);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [learnedFacts, setLearnedFacts] = useState<string[]>([]);
   
   // Refs
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -58,6 +59,17 @@ export default function NeuralPage() {
                 router.push("/login?next=/neural");
             } else {
                 setIsCheckingAuth(false);
+                // Fetch memories
+                const { data: memories } = await supabase
+                    .from('user_memories')
+                    .select('memory_text')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false })
+                    .limit(3);
+                
+                if (memories) {
+                    setLearnedFacts(memories.map(m => m.memory_text));
+                }
             }
         } catch (e) {
             console.error("Auth check failed", e);
@@ -340,13 +352,26 @@ export default function NeuralPage() {
           
           <div className="flex-1 w-full overflow-y-auto px-4 scrollbar-hide" ref={scrollRef}>
              {messages.length === 0 ? (
-                 <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-40">
-                     <div className="p-4 rounded-2xl bg-white/5 ring-1 ring-white/10">
-                         <Sparkles className="w-8 h-8 text-white" strokeWidth={1} />
+                 <div className="h-full flex flex-col items-center justify-center text-center space-y-8 opacity-60">
+                     <div className="space-y-2">
+                         <h1 className="text-xl font-light text-zinc-200 tracking-wide">
+                             {learnedFacts.length > 0 ? "Active Context" : "Neural Engine"}
+                         </h1>
                      </div>
-                     <div>
-                         <h1 className="text-2xl font-light text-white">How can I help?</h1>
-                     </div>
+                     
+                     {learnedFacts.length > 0 ? (
+                        <div className="flex flex-col gap-3 max-w-md w-full">
+                            {learnedFacts.map((fact, i) => (
+                                <div key={i} className="text-sm text-zinc-400 bg-white/5 border border-white/5 px-4 py-3 rounded-lg backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-700" style={{ animationDelay: `${i * 100}ms` }}>
+                                    {fact}
+                                </div>
+                            ))}
+                        </div>
+                     ) : (
+                        <p className="text-sm text-zinc-500 font-light max-w-xs leading-relaxed">
+                            No learned context yet. Start chatting to build memory.
+                        </p>
+                     )}
                  </div>
              ) : (
                  <div className="flex flex-col gap-6 pb-32">
