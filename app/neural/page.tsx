@@ -7,7 +7,7 @@ import {
   Menu, ChevronDown, User, Search, Brain, 
   Paperclip, Code, Sparkles, Globe, PenTool, 
   Presentation, LayoutGrid, Plus, ArrowUp, X,
-  LogOut, Settings, Check
+  LogOut, Settings, Check, FileText
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
@@ -210,16 +210,28 @@ export default function NeuralPage() {
       let assistantMessage = { role: "assistant", content: "" } as Message;
       setMessages((prev) => [...prev, assistantMessage]);
 
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done || controller.signal.aborted) break;
+
         const text = decoder.decode(value, { stream: true });
-        assistantMessage.content += text;
-        setMessages((prev) => {
+
+        // If the backend/model returns a large chunk instantly, render it progressively
+        // so the UI still feels like true streaming.
+        const parts = text.length > 60 ? (text.match(/.{1,12}/g) ?? [text]) : [text];
+
+        for (const part of parts) {
+          if (controller.signal.aborted) break;
+          assistantMessage.content += part;
+          setMessages((prev) => {
             const newPrev = [...prev];
             newPrev[newPrev.length - 1] = { ...assistantMessage };
             return newPrev;
-        });
+          });
+          if (parts.length > 1) await sleep(12);
+        }
       }
 
       // Background Memory
