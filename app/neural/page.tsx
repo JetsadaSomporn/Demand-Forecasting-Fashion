@@ -509,7 +509,23 @@ export default function NeuralPage() {
                                 )}>
                                     <ReactMarkdown 
                                         components={{
-                                            code: ({node, ...props}) => <code className="bg-zinc-100 text-pink-600 px-1.5 py-0.5 rounded text-sm font-mono border border-zinc-200" {...props} />
+                                            code: ({node, ...props}) => <code className="bg-zinc-100 text-pink-600 px-1.5 py-0.5 rounded text-sm font-mono border border-zinc-200" {...props} />,
+                                            // Handle potential <thought> tags or custom blocks if the model uses them
+                                            p: ({node, children, ...props}) => {
+                                                const content = children?.toString() || "";
+                                                if (content.startsWith("<thought>") || content.includes("<thought>")) {
+                                                    return (
+                                                        <div className="my-4 p-4 bg-blue-50/50 border-l-2 border-blue-200 rounded-r-xl text-blue-700/80 italic text-sm leading-6">
+                                                            <div className="flex items-center gap-2 mb-1 not-italic font-semibold text-blue-800 text-[11px] uppercase tracking-wider">
+                                                                <Brain className="w-3 h-3" />
+                                                                Reasoning Process
+                                                            </div>
+                                                            {children}
+                                                        </div>
+                                                    );
+                                                }
+                                                return <p className="mb-4 last:mb-0" {...props}>{children}</p>;
+                                            }
                                         }}
                                     >
                                         {msg.content}
