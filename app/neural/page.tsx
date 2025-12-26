@@ -4,9 +4,9 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
 import { 
-  Send, Sparkles, StopCircle, Menu, MessageSquare, 
-  Plus, Paperclip, Brain, X, FileText, ChevronLeft,
-  Settings, History, LayoutGrid
+  Menu, ChevronDown, User, Search, Brain, 
+  Paperclip, Code, Sparkles, Globe, PenTool, 
+  Presentation, LayoutGrid, Plus, ArrowUp
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
@@ -31,17 +31,18 @@ type AttachedFile = {
 
 export default function NeuralPage() {
   const router = useRouter();
+  
   // State
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Default closed for minimalism
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isReasoning, setIsReasoning] = useState(false);
   const [files, setFiles] = useState<AttachedFile[]>([]);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [learnedFacts, setLearnedFacts] = useState<string[]>([]);
+  const [userName, setUserName] = useState("User");
   
   // Refs
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -49,7 +50,7 @@ export default function NeuralPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Auth Check
+  // Auth & Profile Check
   useEffect(() => {
     const checkAuth = async () => {
         try {
@@ -59,17 +60,10 @@ export default function NeuralPage() {
                 router.push("/login?next=/neural");
             } else {
                 setIsCheckingAuth(false);
-                // Fetch memories
-                const { data: memories } = await supabase
-                    .from('user_memories')
-                    .select('memory_text')
-                    .eq('user_id', user.id)
-                    .order('created_at', { ascending: false })
-                    .limit(3);
-                
-                if (memories) {
-                    setLearnedFacts(memories.map(m => m.memory_text));
-                }
+                // Try to get display name
+                const { data: profile } = await supabase.from('profiles').select('display_name').eq('id', user.id).single();
+                if (profile?.display_name) setUserName(profile.display_name);
+                else if (user.user_metadata?.full_name) setUserName(user.user_metadata.full_name);
             }
         } catch (e) {
             console.error("Auth check failed", e);
@@ -118,29 +112,15 @@ export default function NeuralPage() {
   };
 
   useEffect(() => {
-    if (!isCheckingAuth) {
-        loadSessions();
-    }
+    if (!isCheckingAuth) loadSessions();
   }, [loadSessions, isCheckingAuth]);
 
   // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
-        // Smooth scroll to bottom
-        scrollRef.current.scrollTo({
-            top: scrollRef.current.scrollHeight,
-            behavior: "smooth"
-        });
+        scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
     }
   }, [messages]);
-
-  // Auto-resize textarea
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
-    }
-  }, [input]);
 
   // File Handling
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,11 +133,7 @@ export default function NeuralPage() {
               }
               try {
                   const text = await file.text();
-                  newFiles.push({
-                      name: file.name,
-                      content: text,
-                      size: file.size
-                  });
+                  newFiles.push({ name: file.name, content: text, size: file.size });
               } catch (err) {
                   console.error("Failed to read file", err);
               }
@@ -167,16 +143,11 @@ export default function NeuralPage() {
       }
   };
 
-  const removeFile = (index: number) => {
-      setFiles(prev => prev.filter((_, i) => i !== index));
-  };
+  const handleSubmit = async (textOverride?: string) => {
+    const textToSend = textOverride || input;
+    if ((!textToSend.trim() && files.length === 0) || isLoading) return;
 
-  // Submit Handler
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if ((!input.trim() && files.length === 0) || isLoading) return;
-
-    let fullContent = input;
+    let fullContent = textToSend;
     if (files.length > 0) {
         fullContent += "\n\n" + files.map(f => `--- File: ${f.name} ---\n${f.content}\n--- End File ---`).join("\n\n");
     }
@@ -189,9 +160,6 @@ export default function NeuralPage() {
     setFiles([]);
     setIsLoading(true);
     
-    // Reset height
-    if (textareaRef.current) textareaRef.current.style.height = "auto";
-
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
@@ -199,11 +167,7 @@ export default function NeuralPage() {
       const response = await fetch("/api/neural", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            messages: currentMessages, 
-            sessionId,
-            isReasoning 
-        }),
+        body: JSON.stringify({ messages: currentMessages, sessionId, isReasoning }),
         signal: controller.signal
       });
 
@@ -216,10 +180,8 @@ export default function NeuralPage() {
       }
 
       if (!response.body) return;
-
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      
       let assistantMessage = { role: "assistant", content: "" } as Message;
       setMessages((prev) => [...prev, assistantMessage]);
 
@@ -228,7 +190,6 @@ export default function NeuralPage() {
         if (done) break;
         const text = decoder.decode(value, { stream: true });
         assistantMessage.content += text;
-        
         setMessages((prev) => {
             const newPrev = [...prev];
             newPrev[newPrev.length - 1] = { ...assistantMessage };
@@ -236,9 +197,7 @@ export default function NeuralPage() {
         });
       }
 
-      // Background Memory Extraction
-      // We send the latest context to see if there's anything to learn
-      // This is "fire and forget" from the UI perspective
+      // Background Memory
       const finalContext = [...currentMessages, assistantMessage];
       fetch("/api/neural/memory", {
           method: "POST",
@@ -248,24 +207,13 @@ export default function NeuralPage() {
 
     } catch (error: any) {
       if (error.name !== 'AbortError') {
-        console.error(error);
-        const errorMessage: Message = { 
-            role: "assistant", 
-            content: "Connection interrupted. Please try again." 
-        };
+        const errorMessage: Message = { role: "assistant", content: "Connection interrupted." };
         setMessages((prev) => [...prev, errorMessage]);
       }
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
-  };
-
-  const handleStop = () => {
-      if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-          setIsLoading(false);
-      }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -278,238 +226,213 @@ export default function NeuralPage() {
   if (isCheckingAuth) return null;
 
   return (
-    <div className="relative flex h-screen w-full flex-col bg-zinc-950 text-zinc-200 font-sans selection:bg-white/10">
+    <div className="flex h-screen w-full flex-col bg-white text-zinc-900 font-sans selection:bg-blue-100">
       
-      {/* --- Sidebar Overlay --- */}
-      {isSidebarOpen && (
-        <div 
-          className="absolute inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* --- Sidebar (Slide-over) --- */}
-      <div className={clsx(
-          "fixed inset-y-0 left-0 z-50 w-72 bg-zinc-900/95 border-r border-white/5 shadow-2xl transform transition-transform duration-300 ease-in-out backdrop-blur-xl",
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
-        <div className="flex h-full flex-col p-4">
-          <div className="flex items-center justify-between mb-8">
-             <h2 className="text-sm font-medium text-white/40 uppercase tracking-widest">History</h2>
-             <button onClick={() => setIsSidebarOpen(false)} className="text-white/40 hover:text-white">
-                 <X className="w-5 h-5" />
+      {/* --- Header --- */}
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur-md">
+         <div className="flex items-center gap-3">
+             <button 
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors text-zinc-600"
+             >
+                 <Menu className="w-5 h-5" />
              </button>
-          </div>
-
-          <button 
-             onClick={startNewChat}
-             className="flex items-center gap-3 w-full rounded-lg bg-white/5 px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors mb-4"
-          >
-             <Plus className="w-4 h-4" />
-             <span>New Conversation</span>
-          </button>
-
-          <div className="flex-1 overflow-y-auto space-y-1 custom-scrollbar">
-             {sessions.map(session => (
-                 <button
-                    key={session.id}
-                    onClick={() => loadSession(session.id)}
-                    className={clsx(
-                        "w-full text-left px-3 py-2 rounded-md text-sm truncate transition-colors",
-                        sessionId === session.id 
-                           ? "bg-white/10 text-white" 
-                           : "text-zinc-400 hover:text-white hover:bg-white/5"
-                    )}
-                 >
-                     {session.title || "Untitled"}
-                 </button>
-             ))}
-          </div>
-        </div>
-      </div>
-
-      {/* --- Main Content --- */}
-      <header className="absolute top-0 left-0 w-full z-10 p-4 flex justify-between items-center bg-gradient-to-b from-zinc-950/80 to-transparent pointer-events-none">
-         <button 
-           onClick={() => setIsSidebarOpen(true)}
-           className="pointer-events-auto p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-colors"
-         >
-             <Menu className="w-5 h-5" />
-         </button>
-         <div className="text-xs font-medium text-zinc-600 tracking-widest uppercase">
-            Neural Engine
+             <button className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-zinc-100 rounded-lg transition-colors font-medium text-zinc-800 text-sm">
+                 <span>Neural-4</span>
+                 <ChevronDown className="w-4 h-4 text-zinc-400" />
+             </button>
          </div>
-         <button 
-           onClick={() => router.push('/forecast')}
-           className="pointer-events-auto p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-colors"
-           title="Go to Dashboard"
-         >
-            <LayoutGrid className="w-5 h-5" />
-         </button>
+
+         <div className="flex items-center gap-2">
+            <button className="w-9 h-9 rounded-full bg-zinc-100 flex items-center justify-center border border-zinc-200 overflow-hidden">
+                <User className="w-5 h-5 text-zinc-500" />
+            </button>
+         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center relative w-full max-w-5xl mx-auto pt-20">
+      {/* --- Sidebar (Slide-over) --- */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm"
+          onClick={() => setIsSidebarOpen(false)}
+        >
+            <div className="absolute inset-y-0 left-0 w-72 bg-white shadow-2xl p-4 flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="font-semibold text-zinc-800">History</h2>
+                    <button onClick={() => router.push('/forecast')} className="p-2 hover:bg-zinc-100 rounded-lg text-zinc-500">
+                         <LayoutGrid className="w-5 h-5" />
+                    </button>
+                </div>
+                <button 
+                    onClick={startNewChat}
+                    className="flex items-center gap-2 w-full p-3 bg-zinc-900 text-white rounded-xl mb-4 hover:bg-zinc-800 transition-colors justify-center font-medium text-sm shadow-lg shadow-zinc-200"
+                >
+                    <Plus className="w-4 h-4" />
+                    New Chat
+                </button>
+                <div className="flex-1 overflow-y-auto space-y-1">
+                    {sessions.map(s => (
+                        <button key={s.id} onClick={() => loadSession(s.id)} className="w-full text-left p-2.5 rounded-lg hover:bg-zinc-50 text-sm text-zinc-600 truncate">
+                            {s.title || "New Conversation"}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
+      )}
+
+      {/* --- Main Content --- */}
+      <main className="flex-1 flex flex-col items-center justify-center relative w-full max-w-4xl mx-auto pt-16 pb-4">
           
-          <div className="flex-1 w-full overflow-y-auto px-4 scrollbar-hide" ref={scrollRef}>
-             {messages.length === 0 ? (
-                 <div className="h-full flex flex-col items-center justify-center text-center space-y-8 opacity-60">
-                     <div className="space-y-2">
-                         <h1 className="text-xl font-light text-zinc-200 tracking-wide">
-                             {learnedFacts.length > 0 ? "Active Context" : "Neural Engine"}
-                         </h1>
-                     </div>
-                     
-                     {learnedFacts.length > 0 ? (
-                        <div className="flex flex-col gap-3 max-w-md w-full">
-                            {learnedFacts.map((fact, i) => (
-                                <div key={i} className="text-sm text-zinc-400 bg-white/5 border border-white/5 px-4 py-3 rounded-lg backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-700" style={{ animationDelay: `${i * 100}ms` }}>
-                                    {fact}
-                                </div>
-                            ))}
-                        </div>
-                     ) : (
-                        <div className="flex flex-col gap-3 w-full max-w-sm">
-                            {[
-                                "Analyze current sales trends", 
-                                "Predict demand for next season", 
-                                "Identify underperforming categories"
-                            ].map((q, i) => (
-                                <button 
-                                    key={i}
-                                    onClick={() => setInput(q)}
-                                    className="text-left text-sm text-zinc-400 hover:text-white hover:bg-white/10 bg-white/5 border border-white/5 px-4 py-3 rounded-lg transition-all"
-                                >
-                                    {q}
-                                </button>
-                            ))}
-                        </div>
-                     )}
-                 </div>
-             ) : (
-                 <div className="flex flex-col gap-6 pb-32">
-                     {messages.map((msg, idx) => (
-                         <div key={idx} className={clsx(
-                             "flex w-full gap-4",
-                             msg.role === "user" ? "justify-end" : "justify-start"
-                         )}>
-                             
-                             {/* Assistant Avatar - Removed for text-only minimalism */}
-
-                             <div className={clsx(
-                                 "relative max-w-2xl px-5 py-3.5 text-[15px] leading-7",
-                                 msg.role === "user" 
-                                    ? "bg-white/10 text-white rounded-2xl rounded-tr-sm" 
-                                    : "text-zinc-300"
-                             )}>
-                                 {msg.role === "assistant" ? (
-                                    <div className="prose prose-invert prose-sm max-w-none 
-                                        prose-p:leading-7 prose-headings:text-zinc-100 prose-strong:text-zinc-100 
-                                        prose-pre:bg-zinc-900 prose-pre:border prose-pre:border-zinc-800
-                                        prose-code:text-teal-300 prose-code:bg-zinc-900/50 prose-code:px-1 prose-code:rounded">
-                                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                                    </div>
-                                 ) : (
-                                     <div className="whitespace-pre-wrap">{msg.content}</div>
-                                 )}
-                             </div>
-                         </div>
-                     ))}
-                     {isLoading && (
-                         <div className="flex w-full gap-4 justify-start px-1">
-                             {/* Loading Indicator */}
-                             <div className="flex items-center gap-1 h-8 px-2">
-                                 <div className="w-1.5 h-1.5 bg-zinc-600 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                                 <div className="w-1.5 h-1.5 bg-zinc-600 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                                 <div className="w-1.5 h-1.5 bg-zinc-600 rounded-full animate-bounce" />
-                             </div>
-                         </div>
-                     )}
-                 </div>
-             )}
-          </div>
-
-          {/* --- Input Area --- */}
-          <div className="w-full px-4 pb-6 pt-2">
-              <div className="relative max-w-3xl mx-auto">
+          {messages.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center w-full px-4 animate-in fade-in zoom-in-95 duration-500">
                   
-                  {/* File Previews */}
-                  {files.length > 0 && (
-                    <div className="flex gap-2 mb-2 px-1 overflow-x-auto">
-                        {files.map((f, i) => (
-                            <div key={i} className="flex items-center gap-2 bg-zinc-800/50 rounded-full px-3 py-1 text-xs text-zinc-300 border border-white/5">
-                                <FileText className="w-3 h-3" />
-                                <span className="truncate max-w-[100px]">{f.name}</span>
-                                <button onClick={() => removeFile(i)} className="hover:text-white"><X className="w-3 h-3" /></button>
-                            </div>
-                        ))}
-                    </div>
-                  )}
+                  {/* Hero Greeting */}
+                  <h1 className="text-3xl md:text-4xl font-semibold mb-8 text-transparent bg-clip-text bg-gradient-to-br from-zinc-800 to-zinc-500 text-center tracking-tight">
+                      Hi, {userName}
+                  </h1>
 
-                  <div className="relative group bg-zinc-900/50 backdrop-blur-xl border border-white/5 focus-within:border-white/10 focus-within:bg-zinc-900 rounded-[2rem] transition-all shadow-lg shadow-black/20">
+                  {/* Input Container */}
+                  <div className="w-full max-w-2xl bg-white rounded-3xl border border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-3 transition-all focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-300">
                       
-                      <textarea
-                          ref={textareaRef}
-                          value={input}
-                          onChange={(e) => setInput(e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          placeholder="Ask anything..."
-                          className="w-full bg-transparent border-none text-zinc-200 px-6 py-4 pr-32 min-h-[56px] max-h-48 resize-none focus:ring-0 placeholder:text-zinc-600"
-                          rows={1}
-                      />
-
-                      <div className="absolute bottom-2 right-2 flex items-center gap-1">
-                          
-                          {/* Attach */}
-                          <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
-                          <button 
-                             onClick={() => fileInputRef.current?.click()}
-                             className="p-2 text-zinc-500 hover:text-zinc-300 hover:bg-white/5 rounded-full transition-colors"
-                          >
-                              <Paperclip className="w-4 h-4" />
+                      {/* Top Controls */}
+                      <div className="flex items-center gap-2 mb-2 px-1">
+                          <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 hover:bg-zinc-100 transition-colors">
+                              <Search className="w-3.5 h-3.5" />
+                              Search
                           </button>
-
-                          {/* Reasoning Toggle */}
                           <button 
                              onClick={() => setIsReasoning(!isReasoning)}
                              className={clsx(
-                                 "flex items-center justify-center p-2 rounded-full transition-all border",
+                                 "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
                                  isReasoning 
-                                    ? "bg-teal-500/10 text-teal-400 border-teal-500/20" 
-                                    : "bg-transparent text-zinc-500 border-transparent hover:text-zinc-300 hover:bg-white/5"
+                                    ? "bg-blue-50 text-blue-600" 
+                                    : "text-zinc-500 hover:bg-zinc-100"
                              )}
-                             title="Reasoning Mode"
                           >
-                              <Brain className="w-4 h-4" />
+                              <Brain className="w-3.5 h-3.5" />
+                              Deep Think
                           </button>
+                      </div>
 
-                          {/* Send / Stop */}
-                          {isLoading ? (
-                              <button onClick={handleStop} className="p-2 bg-zinc-800 rounded-full text-zinc-200 hover:bg-zinc-700">
-                                  <StopCircle className="w-4 h-4" />
-                              </button>
-                          ) : (
-                              <button 
-                                 onClick={() => handleSubmit()}
-                                 disabled={!input.trim() && files.length === 0}
-                                 className={clsx(
-                                     "p-2 rounded-full transition-all",
-                                     (input.trim() || files.length > 0)
-                                        ? "bg-zinc-100 text-black hover:bg-white hover:scale-105" 
-                                        : "bg-zinc-800 text-zinc-600"
-                                 )}
-                              >
-                                  <Send className="w-4 h-4" />
-                              </button>
-                          )}
+                      {/* Text Input */}
+                      <div className="relative px-1">
+                        <textarea
+                            ref={textareaRef}
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="How can I help you today?"
+                            className="w-full bg-transparent border-none text-zinc-800 text-lg placeholder:text-zinc-400 focus:ring-0 resize-none min-h-[60px] max-h-48 py-2"
+                            rows={1}
+                        />
+                        {/* Right Action Button */}
+                        <div className="absolute bottom-2 right-0">
+                            <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
+                            <button 
+                                onClick={() => input.trim() ? handleSubmit() : fileInputRef.current?.click()}
+                                className={clsx(
+                                    "p-2 rounded-xl transition-all",
+                                    input.trim() 
+                                        ? "bg-zinc-900 text-white shadow-lg hover:scale-105" 
+                                        : "bg-zinc-100 text-zinc-400 hover:bg-zinc-200"
+                                )}
+                            >
+                                {input.trim() ? <ArrowUp className="w-5 h-5" /> : <Paperclip className="w-5 h-5" />}
+                            </button>
+                        </div>
                       </div>
                   </div>
-                  
-                  <div className="text-center mt-3 text-[10px] text-zinc-700 font-medium tracking-widest uppercase">
-                      Neural v2.0
+
+                  {/* Quick Action Pills */}
+                  <div className="mt-8 flex flex-wrap justify-center gap-3">
+                      {[ 
+                          { icon: Presentation, label: "AI Slides" },
+                          { icon: Code, label: "Full-Stack" },
+                          { icon: Sparkles, label: "Magic Design" },
+                          { icon: PenTool, label: "Write Code" },
+                          { icon: Globe, label: "Deep Research" },
+                      ].map((item, i) => (
+                          <button 
+                             key={i}
+                             onClick={() => handleSubmit(`Help me with ${item.label}`)}
+                             className="flex items-center gap-2 px-4 py-2 bg-white border border-zinc-200 rounded-full text-sm text-zinc-600 hover:border-zinc-300 hover:shadow-sm hover:bg-zinc-50 transition-all"
+                          >
+                              <item.icon className="w-4 h-4 text-zinc-400" />
+                              {item.label}
+                          </button>
+                      ))}
                   </div>
 
               </div>
-          </div>
+          ) : (
+              /* Chat View */
+              <div className="flex-1 w-full flex flex-col relative overflow-hidden">
+                  <div className="flex-1 overflow-y-auto px-4 pb-32 pt-4 space-y-8" ref={scrollRef}>
+                      {messages.map((msg, idx) => (
+                          <div key={idx} className={clsx("flex gap-4 max-w-3xl mx-auto w-full", msg.role === "user" ? "justify-end" : "justify-start")}>
+                                {msg.role === "assistant" && (
+                                    <div className="w-8 h-8 rounded-full bg-blue-600/10 flex items-center justify-center shrink-0 mt-1">
+                                        <Brain className="w-4 h-4 text-blue-600" />
+                                    </div>
+                                )}
+                                <div className={clsx(
+                                    "px-5 py-3.5 rounded-2xl max-w-[85%] text-[15px] leading-relaxed shadow-sm",
+                                    msg.role === "user" 
+                                        ? "bg-zinc-100 text-zinc-800 rounded-br-sm" 
+                                        : "bg-white border border-zinc-100 text-zinc-800"
+                                )}>
+                                    <ReactMarkdown 
+                                        components={{
+                                            code: ({node, ...props}) => <code className="bg-zinc-100 text-pink-600 px-1 rounded" {...props} />
+                                        }}
+                                    >
+                                        {msg.content}
+                                    </ReactMarkdown>
+                                </div>
+                          </div>
+                      ))}
+                      {isLoading && (
+                          <div className="flex gap-4 max-w-3xl mx-auto w-full">
+                               <div className="w-8 h-8 rounded-full bg-blue-600/10 flex items-center justify-center shrink-0 mt-1">
+                                    <Brain className="w-4 h-4 text-blue-600 animate-pulse" />
+                               </div>
+                               <div className="flex items-center gap-1.5 h-8">
+                                   <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                   <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                   <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" />
+                               </div>
+                          </div>
+                      )}
+                  </div>
+
+                  {/* Floating Input (Chat Mode) */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent">
+                      <div className="max-w-3xl mx-auto w-full bg-white rounded-3xl border border-zinc-200 shadow-xl shadow-black/5 p-2 flex items-end gap-2">
+                           <button onClick={() => fileInputRef.current?.click()} className="p-3 hover:bg-zinc-100 rounded-full text-zinc-500">
+                               <Paperclip className="w-5 h-5" />
+                           </button>
+                           <textarea
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Type a message..."
+                                className="flex-1 bg-transparent border-none text-zinc-800 max-h-32 py-3 focus:ring-0 resize-none"
+                                rows={1}
+                           />
+                           <button 
+                                onClick={() => handleSubmit()}
+                                className={clsx(
+                                    "p-3 rounded-full transition-all",
+                                    input.trim() ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-400"
+                                )}
+                           >
+                               <ArrowUp className="w-5 h-5" />
+                           </button>
+                      </div>
+                  </div>
+              </div>
+          )}
 
       </main>
     </div>
