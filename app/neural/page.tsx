@@ -6,7 +6,7 @@ import { clsx } from "clsx";
 import { 
   Send, Sparkles, StopCircle, Menu, MessageSquare, 
   Plus, Paperclip, Brain, X, FileText, ChevronLeft,
-  Settings, History
+  Settings, History, LayoutGrid
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
@@ -327,7 +327,13 @@ export default function NeuralPage() {
          <div className="text-xs font-medium text-zinc-600 tracking-widest uppercase">
             Neural Engine
          </div>
-         <div className="w-9" /> {/* Spacer for centering */}
+         <button 
+           onClick={() => router.push('/forecast')}
+           className="pointer-events-auto p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-colors"
+           title="Go to Dashboard"
+         >
+            <LayoutGrid className="w-5 h-5" />
+         </button>
       </header>
 
       <main className="flex-1 flex flex-col items-center relative w-full max-w-5xl mx-auto pt-20">
