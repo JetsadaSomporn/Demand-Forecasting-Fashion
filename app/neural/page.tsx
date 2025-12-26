@@ -263,7 +263,7 @@ export default function NeuralPage() {
   if (isCheckingAuth) return null;
 
   return (
-    <div className="flex h-screen w-full flex-col bg-white text-zinc-900 font-sans selection:bg-blue-100">
+    <div className="fixed inset-0 w-full flex flex-col bg-white text-zinc-900 font-sans selection:bg-blue-100 overflow-hidden">
       
       {/* --- Header --- */}
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-white/80 backdrop-blur-md transition-all duration-300">

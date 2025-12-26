@@ -95,7 +95,7 @@ export async function POST(request: Request) {
     };
 
     if (isReasoning) {
-        // Native Nemotron Reasoning Trigger: Exact string "detailed thinking on"
+        // Reasoning Mode: Enable detailed thinking
         llmMessages = [{ role: 'system', content: "detailed thinking on" }, ...llmMessages];
 
         options.temperature = 0.6;
@@ -104,9 +104,14 @@ export async function POST(request: Request) {
         options.frequencyPenalty = 0;
         options.presencePenalty = 0;
     } else {
-        options.temperature = 0.7;
-        options.topP = 0.9;
-        options.maxTokens = 1024;
+        // Standard Mode: Disable detailed thinking explicitly
+        llmMessages = [{ role: 'system', content: "detailed thinking off" }, ...llmMessages];
+        
+        options.temperature = 0; // As requested for non-reasoning
+        options.topP = 0.95;
+        options.maxTokens = 4096;
+        options.frequencyPenalty = 0;
+        options.presencePenalty = 0;
     }
 
     // 3. Call LLM
