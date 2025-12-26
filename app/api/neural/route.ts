@@ -95,29 +95,14 @@ export async function POST(request: Request) {
     };
 
     if (isReasoning) {
-        const reasoningPrompt = `You are a specialized reasoning engine. 
-Your goal is to provide deep, well-thought-out solutions.
-Before answering the user directly, you must:
-1. Deconstruct the problem into core components.
-2. Analyze potential edge cases or constraints.
-3. Formulate a logical step-by-step solution.
-4. Verify your logic for consistency.
+        // Native Nemotron Reasoning Trigger: Exact string "detailed thinking on"
+        llmMessages = [{ role: 'system', content: "detailed thinking on" }, ...llmMessages];
 
-Maintain a professional, analytical tone.`;
-        
-        // Add the reasoning instruction as a system message (or append to existing)
-        // If there's already a memory system message, we append to the list.
-        // If not, it becomes the first.
-        const hasSystem = llmMessages.length > 0 && llmMessages[0].role === 'system';
-        if (hasSystem) {
-             llmMessages[0].content = reasoningPrompt + "\n\n" + llmMessages[0].content;
-        } else {
-             llmMessages = [{ role: 'system', content: reasoningPrompt }, ...llmMessages];
-        }
-
-        options.temperature = 0.6; // Slightly lower for precision
+        options.temperature = 0.6;
         options.topP = 0.95;
         options.maxTokens = 4096;
+        options.frequencyPenalty = 0;
+        options.presencePenalty = 0;
     } else {
         options.temperature = 0.7;
         options.topP = 0.9;
