@@ -329,7 +329,7 @@ export default function NeuralPage() {
                       Hi, {userName}
                   </h1>
 
-                  <div className="w-full max-w-2xl bg-white rounded-2xl border border-zinc-200 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.1)] p-4 transition-all focus-within:ring-4 focus-within:ring-zinc-100 group">
+                  <div className="w-full max-w-2xl bg-white rounded-2xl border border-zinc-200 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.1)] p-4 transition-all group">
                       <div className="flex items-center gap-2 mb-3 px-1">
                           <button onClick={() => setIsWebSearch(!isWebSearch)} className={clsx("flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-all", isWebSearch ? "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100" : "text-zinc-500 hover:bg-zinc-100")}>
                               <Search className="w-3.5 h-3.5" />
@@ -428,7 +428,7 @@ export default function NeuralPage() {
                   </div>
 
                   <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white/95 to-transparent z-20">
-                      <div className="max-w-3xl mx-auto w-full bg-white rounded-2xl border border-zinc-200 shadow-xl shadow-zinc-200/50 p-2 flex items-end gap-2 transition-all focus-within:ring-2 focus-within:ring-zinc-100">
+                      <div className="max-w-3xl mx-auto w-full bg-white rounded-2xl border border-zinc-200 shadow-xl shadow-zinc-200/50 p-2 flex items-end gap-2 transition-all">
                            <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
                            <button onClick={() => fileInputRef.current?.click()} className="p-3 hover:bg-zinc-100 rounded-full text-zinc-500"><Paperclip className="w-5 h-5" /></button>
                            {files.length > 0 && (
