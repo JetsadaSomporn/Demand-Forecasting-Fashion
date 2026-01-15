@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -83,7 +83,7 @@ const chartOptions = {
   },
 };
 
-export default function MinimalChart({ labels, predicted, actual }: MinimalChartProps) {
+function MinimalChart({ labels, predicted, actual }: MinimalChartProps) {
   const { t } = useTranslation();
 
   const safePredicted = useMemo(() => {
@@ -179,3 +179,5 @@ export default function MinimalChart({ labels, predicted, actual }: MinimalChart
     </div>
   );
 }
+
+export default React.memo(MinimalChart);
