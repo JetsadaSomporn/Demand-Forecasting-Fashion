@@ -218,7 +218,6 @@ export async function getSettingsDefaults() {
     currency: "USD",
     language: resolveLanguage(undefined),
     theme: "dark" as "dark" | "light",
-    useMemory: true,
   };
 
   if (isSupabaseConfigured("service")) {
@@ -226,7 +225,7 @@ export async function getSettingsDefaults() {
       const supabase = createSupabaseServiceClient();
       const { data, error } = await supabase
         .from("settings")
-        .select("brand_name, display_name, timezone, currency, language, theme, use_memory")
+        .select("brand_name, display_name, timezone, currency, language, theme")
         .limit(1)
         .single();
 
@@ -238,7 +237,6 @@ export async function getSettingsDefaults() {
           currency: normalizeCurrencyCode(data.currency ?? defaults.currency),
           language: resolveLanguage(data.language),
           theme: (data.theme === "light" || data.theme === "dark" ? data.theme : defaults.theme),
-          useMemory: data.use_memory ?? defaults.useMemory,
         };
       }
     } catch (error) {
@@ -258,7 +256,6 @@ export async function getSettingsDefaults() {
         local.theme === "light" || local.theme === "dark"
           ? local.theme
           : defaults.theme,
-      useMemory: local.useMemory ?? defaults.useMemory,
     };
   }
 

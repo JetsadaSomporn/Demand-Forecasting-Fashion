@@ -35,7 +35,6 @@ export const dictionaries = {
       forecast: "Forecast",
       history: "History",
       settings: "Settings",
-      neural: "Neural",
     },
     dashboard: {
       heroBadge: "Auto model switching",
@@ -328,7 +327,6 @@ export const dictionaries = {
       forecast: "คาดการณ์",
       history: "ประวัติ",
       settings: "การตั้งค่า",
-      neural: "Neural",
     },
     dashboard: {
       heroBadge: "สลับโมเดลอัตโนมัติ",

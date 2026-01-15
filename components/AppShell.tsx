@@ -20,7 +20,6 @@ export default function AppShell({ children, user }: AppShellProps) {
     () => [
       { href: "/forecast", label: t("nav.forecast") },
       { href: "/history", label: t("nav.history") },
-      { href: "/neural", label: t("nav.neural") },
       { href: "/settings", label: t("nav.settings") },
     ],
     [t]

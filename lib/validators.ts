@@ -53,7 +53,6 @@ export const settingsSchema = z.object({
   currency: z.string().min(1).max(8),
   language: z.enum(["en", "th"]),
   theme: z.enum(["dark", "light"]),
-  useMemory: z.boolean().default(true),
 });
 
 export type SettingsFormInput = z.input<typeof settingsSchema>;
